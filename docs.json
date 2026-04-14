@@ -49,7 +49,8 @@
             "group": "AI導演系統",
             "pages": [
               "ai-director/core-v1",
-              "ai-director/timeline-v1"
+              "ai-director/timeline-v1",
+              "ai-director/jlcut-v1"
             ]
           }
         ]
