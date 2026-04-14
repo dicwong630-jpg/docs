@@ -114,15 +114,33 @@ DEMO_SCRIPT = [
 # ─────────────────────────────────────────────────────
 
 
+def load_txt(path: str) -> list[dict]:
+    """每行文字 = 一個場景（自動 TTS）。空行跳過。"""
+    scenes = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            scenes.append({"text": line, "tts": True})
+    if not scenes:
+        raise ValueError(f"{path} 入面冇內容，請確保每行有文字。")
+    return scenes
+
+
 if __name__ == "__main__":
-    # 用法：python generate.py          → 跑示範腳本
-    #       python generate.py my.py    → 從外部腳本匯入 SCRIPT 變量
+    # 用法：
+    #   python generate.py              → 示範腳本
+    #   python generate.py 描述.txt     → 純中文文字檔，每行一個場景
+    #   python generate.py my_script.py → Python SCRIPT 列表
     if len(sys.argv) > 1:
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("custom", sys.argv[1])
-        mod  = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        script = mod.SCRIPT
+        src = sys.argv[1]
+        if src.endswith(".txt"):
+            script = load_txt(src)
+        else:
+            import importlib.util
+            spec = importlib.util.spec_from_file_location("custom", src)
+            mod  = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+            script = mod.SCRIPT
     else:
         script = DEMO_SCRIPT
 
