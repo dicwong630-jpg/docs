@@ -1,0 +1,192 @@
+---
+title: "「第二境界」受控 AI 影片製作方法論"
+description: "六大維度主動執行命令 + 逆向工程電影製作，實現 100% 受控 AI 視頻輸出"
+---
+
+# 「第二境界」受控 AI 影片製作方法論
+
+> **核心理念**：不依賴 AI 隨機生成，而是用結構化指令主動控制每一幀的輸出 — 從物理參數逆推 Prompt。
+
+---
+
+## 六大維度主動執行命令
+
+### 維度 1：確定絕對主體
+
+鎖定大師姐或 KO仔，防止 AI 將注意力平分給環境。
+
+```yaml
+Set Absolute Subject:
+  Character: [大師姐 | KO仔]
+  Weight: 1.0
+  Filter: Background Noise
+  Lock Character Seed: true
+```
+
+**原則**：主體權重必須為 `1.0`，背景雜訊全部過濾。角色 Seed 一旦鎖定，整集不得更改。
+
+---
+
+### 維度 2：錨定核心動作
+
+設定 KO仔打拳或大師姐施展魔法的優先級，輔助動作不得干擾核心。
+
+```yaml
+Anchor Core Action:
+  Primary Action: [打拳 | 施展魔法 | 輸入代碼]
+  Secondary Action: [頭髮飄動 | 衣擺搖動]
+  Hierarchy: Primary Action > Secondary Action > Environment
+```
+
+**原則**：輔助動作（頭髮飄動）只能在核心動作完成後啟動，絕不搶奪模型注意力。
+
+---
+
+### 維度 3：界定畫面客體
+
+規定背景角色（街市阿伯、機房零件）為靜止或微動，杜絕客體奪取模型注意力。
+
+```yaml
+Define Object Boundary:
+  Object: [街市阿伯 | 背景機房零件 | 龍蝦（非主場景）]
+  State: Static | Slow-motion (max 5% velocity)
+  Buffer: No Interference with Subject
+```
+
+---
+
+### 維度 4：鏡頭調度邏輯
+
+嚴禁隨機漂移，確保 8K 下的焦距鎖定於主體。
+
+```yaml
+Set Tracking Shot:
+  Velocity: Subject Speed (synchronized)
+  Focal Length: 35mm Fixed
+  Z-axis Deviation: < 0.05%
+  Random Drift: DISABLED
+```
+
+**原則**：8K 解析度下，0.1% 的焦距偏移已造成明顯模糊，Z 軸偏差必須嚴格控制。
+
+---
+
+### 維度 5：光影情緒匹配
+
+利用光影烘托大師姐的「數據魔法」氛圍。
+
+```yaml
+Map Emotional Lighting:
+  Subject: Warm Yellow (#FFD700)
+  Background: Cyan (#00FFFF)
+  Contrast Ratio: 4:1
+  Effect: 大師姐被暖光包圍，背景機房冷藍光形成視覺張力
+```
+
+**情緒對照表**：
+
+| 場景 | 主體光 | 背景光 | 情緒效果 |
+|------|--------|--------|----------|
+| 大師姐施法 | 螢光黃 | 冷青藍 | 神秘感、技術權威 |
+| KO仔打拳 | 暖橙紅 | 深黑 | 熱血、緊張 |
+| 搞笑場景 | 柔和白 | 彩色霓虹 | 輕鬆、喜劇感 |
+
+---
+
+### 維度 6：時間節奏演變
+
+按秒級別拆解狀態演變，確保每段時間有明確任務。
+
+```yaml
+Execute Stage Evolution:
+  T=0-3s:  Entry (角色進場、環境建立)
+  T=4-6s:  "Nan-fa" Action (核心「撚化」動作或台詞)
+  T=7-10s: Exit (結果呈現、表情反應)
+```
+
+---
+
+## 逆向工程電影製作（Reverse Engineering）
+
+不依賴隨機生成，從 8K 物理參數逆推指令。
+
+### 流體力學：汗水噴灑軌跡
+
+```yaml
+Fluid Particle Parameters:
+  Source: KO仔打拳時的汗水軌跡
+  Physics: Newtonian fluid, surface tension = 0.073 N/m
+  Particle Count: 500-800 per frame
+  Trajectory: Arc from impact point, gravity = 9.8 m/s²
+  Render: Sub-surface scattering, light refraction enabled
+```
+
+### 震動頻率：拳頭擊中沙包
+
+```yaml
+Physical Vibration:
+  Frequency: 15Hz
+  Source: Punch impact on sandbag
+  Effect: 「紮實」質感，布料與肌肉微震
+  Camera Response: Slight handheld shake (amplitude < 2px at 8K)
+```
+
+---
+
+## 完整場景 Prompt 範本
+
+以下為「維度 1–6 全啟動」的標準 Prompt 結構：
+
+```yaml
+scene_prompt:
+  # 維度1：主體
+  subject: "大師姐, black blazer, side ponytail"
+  subject_weight: 1.0
+  character_seed: LOCK
+
+  # 維度2：動作
+  action_primary: "typing code on holographic keyboard"
+  action_secondary: "hair gently swaying"
+  action_hierarchy: primary > secondary
+
+  # 維度3：客體
+  background_objects:
+    - object: "server racks"
+      state: "static"
+    - object: "blinking LEDs"
+      state: "slow pulse, no interference"
+
+  # 維度4：鏡頭
+  camera:
+    type: "tracking shot"
+    focal_length: "35mm"
+    z_axis_deviation: "<0.05%"
+    random_drift: false
+
+  # 維度5：光影
+  lighting:
+    subject: "warm yellow, #FFD700"
+    background: "cyan, #00FFFF"
+    contrast_ratio: "4:1"
+
+  # 維度6：時間
+  timing:
+    T_0_3s: "大師姐走進機房"
+    T_4_6s: "開始輸入代碼，螢光效果啟動"
+    T_7_10s: "代碼編譯完成，大師姐推眼鏡，冷笑"
+
+  # 物理參數
+  physics:
+    render_quality: "8K"
+    fluid_simulation: false
+    vibration_hz: 0
+```
+
+---
+
+## 相關文件
+
+- [系列總覽](/ko-series/overview) — 商業戰略與視覺識別系統
+- [角色檔案](/ko-series/characters) — DNA 鎖定與角色設定
+- [十集路線圖](/ko-series/episode-roadmap) — 每集的具體技術指令
+- [AI導演核心系統 v1](/ai-director/core-v1) — 底層「劇本即程式碼」邏輯

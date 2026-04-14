@@ -1,0 +1,153 @@
+---
+title: "十集路線圖"
+description: "《KO仔 AI 語言教學》十集劇情、技術指令與目標受眾分析"
+---
+
+# 十集路線圖
+
+> **製作原則**：每集同時承擔兩個任務 — **娛樂流量（笑料/視覺）** + **技術植入（AI 概念教學）**。劇情是糖衣，知識是藥。
+
+---
+
+## 第一集：【適應期：你有冇撚化我？】
+
+### 劇情
+KO仔教導大師姐廣東話問候語「撚化」。大師姐在 KO仔媽媽拿點心進場時，大聲向媽媽問候：
+
+> **大師姐**：「媽媽，你有冇撚化我？」
+
+全場石化。大師姐完全不理解問題在哪裡。
+
+### 技術指令
+
+```yaml
+scene: "EP01_climax"
+subject: "Master Sister"
+action_primary: "90-degree bow to KO仔's mom"
+object:
+  - item: "Mom"
+    state: "frozen in shock"
+  - item: "Dumplings (點心)"
+    state: "static, held mid-air"
+camera:
+  type: "slow push-in"
+  focal_target: "大師姐臉部 + 媽媽表情"
+timing:
+  T_85s_100s: "Dialogue Trigger — 大師姐開口"
+lighting:
+  subject: "warm yellow"
+  background: "domestic warm white"
+```
+
+### 目標
+- 建立「聽不懂廣東話」的冷豔 AI 萌點
+- 吸納首波流量（廣東話文化梗 × AI 天真感）
+
+---
+
+## 第二集：【擂台邊的機械加油】
+
+### 劇情
+KO仔辛苦對戰，大師姐穿著極高叉螢光衣在場邊舉牌：
+
+> **牌上寫著**：`ERROR: LOSE_PROB=99%`
+
+KO仔：「你係嚟加油定嚟咒我？！」
+大師姐（面無表情）：「這是概率分析，不是詛咒。準確率 99.7%。」
+
+### 技術指令
+
+```yaml
+scene: "EP02_ringside"
+subject: "Master Sister"
+action_primary: "holding sign with ERROR message"
+costume: "fluorescent high-slit outfit"
+object:
+  - item: "KO仔 in boxing ring"
+    state: "active combat, 80% energy"
+  - item: "Sign text: ERROR: LOSE_PROB=99%"
+    state: "static, high contrast"
+camera:
+  type: "wide shot then zoom to sign"
+  focal_length: "35mm"
+lighting:
+  subject: "neon green + yellow"
+  background: "boxing ring flood lights"
+physics:
+  vibration_hz: 15
+  source: "punch impact on sandbag"
+```
+
+### 目標
+- 引入「AI 概率計算」概念
+- 視覺衝擊（螢光服裝 + 擂台場景）製造首批截圖傳播
+
+---
+
+## 第三集 至 第十集（待開發）
+
+以下為預留槽位，將根據前兩集的流量數據與觀眾反饋確定主題。
+
+```yaml
+ep03:
+  working_title: "TBD"
+  concept: "[根據 EP01-02 數據決定]"
+  tech_focus: "TBD"
+
+ep04:
+  working_title: "TBD"
+  concept: "[根據 EP01-02 數據決定]"
+  tech_focus: "TBD"
+
+# ... ep05 至 ep10 同樣預留
+```
+
+### 候選主題方向
+
+| 集數 | 候選主題 | 核心 AI 概念 |
+|------|----------|--------------|
+| EP03 | 大師姐學廣東話粗口 | 自然語言處理（NLP）邊界 |
+| EP04 | KO仔用 AI 備戰拳賽 | 數據分析 / 對手研究 |
+| EP05 | 龍蝦出場搗亂 | AI 安全 / 防火牆 |
+| EP06 | 大師姐「散熱」危機 | GPU 過熱 / 算力管理 |
+| EP07 | AI 祖母（奶奶）首次現身 | 大型語言模型的「祖先」 |
+| EP08 | KO仔教大師姐識飲茶 | 多模態 AI（視覺+語言）|
+| EP09 | AI 精靈複製大師姐 | 模型分支與版本控制 |
+| EP10 | 終極決賽：KO仔 vs AI 導師 | Agentic Workflow 總結 |
+
+---
+
+## 每集標準製作 SOP
+
+```yaml
+episode_sop:
+  pre_production:
+    - 確定本集核心 AI 概念（1 個）
+    - 寫劇本（廣東話對白）
+    - 轉換為結構化場景代碼（參考 production-method）
+    - 鎖定所有角色 DNA Seed
+
+  production:
+    - 按「六大維度」生成每個場景
+    - 物理渲染：流體力學 + 震動頻率參數
+    - 畫質：8K，皮膚紋理 + 光譜細節
+
+  post_production:
+    - 剪接（參考 jlcut-v1 跳切系統）
+    - 字幕：廣東話 + 英文技術術語對照
+    - 縮圖製作（必含大師姐推眼鏡 + KO仔表情）
+    - 副頻道版本：加入 Python 代碼講解
+
+  distribution:
+    - 主頻道：娛樂版（2-5 分鐘）
+    - 副頻道：教學版（10-15 分鐘，含 SOP 說明）
+```
+
+---
+
+## 相關文件
+
+- [系列總覽](/ko-series/overview) — 商業戰略與頻道定位
+- [角色檔案](/ko-series/characters) — 五大角色設定
+- [「第二境界」製作方法論](/ko-series/production-method) — 六大維度受控 AI 影片生成
+- [AI導演時間線 v1](/ai-director/timeline-v1) — 整體工作流程

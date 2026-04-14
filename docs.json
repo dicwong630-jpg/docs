@@ -52,6 +52,15 @@
               "ai-director/timeline-v1",
               "ai-director/jlcut-v1"
             ]
+          },
+          {
+            "group": "KO仔 AI 語言教學",
+            "pages": [
+              "ko-series/overview",
+              "ko-series/characters",
+              "ko-series/production-method",
+              "ko-series/episode-roadmap"
+            ]
           }
         ]
       },
