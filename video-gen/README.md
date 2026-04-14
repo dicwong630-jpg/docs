@@ -7,11 +7,14 @@
 ## 第一步：安裝（複製落終端機，跑一次就夠）
 
 ```bash
-pip install gtts pillow moviepy
+pip install -r requirements.txt
 ```
 
 > macOS 需要：`brew install ffmpeg`  
-> Ubuntu：`sudo apt install ffmpeg`
+> Ubuntu：`sudo apt install ffmpeg`  
+> Windows：從 https://ffmpeg.org/download.html 下載，解壓後加入 `PATH`
+
+> **Windows 用戶注意**：如果 `pip install gtts` 出現 `click` 版本衝突錯誤，用上面的 `requirements.txt` 安裝方法即可自動修正。
 
 ---
 
@@ -33,10 +36,19 @@ pip install gtts pillow moviepy
 
 ## 第三步：呼喚視頻出嚟
 
+**macOS / Linux：**
 ```bash
 cd video-gen
 python generate.py 我的視頻.txt
 ```
+
+**Windows PowerShell：**
+```powershell
+cd video-gen
+python generate.py 我的視頻.txt
+```
+
+> ⚠️ Windows 上直接輸入 `generate.py` 不會運作，必須加 `python`。
 
 輸出：`output.mp4` ✅
 
@@ -44,7 +56,13 @@ python generate.py 我的視頻.txt
 
 ## 唔使 txt 文件？直接試示範
 
+**macOS / Linux：**
 ```bash
+python generate.py
+```
+
+**Windows PowerShell：**
+```powershell
 python generate.py
 ```
 
