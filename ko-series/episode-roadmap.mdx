@@ -9,104 +9,182 @@ description: "《KO仔 AI 語言教學》十集劇情、技術指令與目標受
 
 ---
 
-## 第一集：【適應期：你有冇撚化我？】
+## 第一集：【擂台邊的機械加油】
+
+> **開場戰略**：第一集必須爆。擂台場景視覺衝擊力最強，KO仔由弱轉強的反差能第一時間抓住觀眾，螢光大師姐舉牌的畫面天生適合截圖傳播。
 
 ### 劇情
-KO仔教導大師姐廣東話問候語「撚化」。大師姐在 KO仔媽媽拿點心進場時，大聲向媽媽問候：
-
-> **大師姐**：「媽媽，你有冇撚化我？」
-
-全場石化。大師姐完全不理解問題在哪裡。
-
-### 技術指令
-
-```yaml
-scene: "EP01_climax"
-subject: "Master Sister"
-action_primary: "90-degree bow to KO仔's mom"
-object:
-  - item: "Mom"
-    state: "frozen in shock"
-  - item: "Dumplings (點心)"
-    state: "static, held mid-air"
-camera:
-  type: "slow push-in"
-  focal_target: "大師姐臉部 + 媽媽表情"
-timing:
-  T_85s_100s: "Dialogue Trigger — 大師姐開口"
-lighting:
-  subject: "warm yellow"
-  background: "domestic warm white"
-```
-
-### 目標
-- 建立「聽不懂廣東話」的冷豔 AI 萌點
-- 吸納首波流量（廣東話文化梗 × AI 天真感）
-
----
-
-## 第二集：【擂台邊的機械加油】
-
-### 劇情
-KO仔辛苦對戰，大師姐穿著極高叉螢光衣在場邊舉牌：
+KO仔辛苦對戰，眼看就要落敗。大師姐穿著極高叉螢光衣在場邊舉牌：
 
 > **牌上寫著**：`ERROR: LOSE_PROB=99%`
 
 KO仔：「你係嚟加油定嚟咒我？！」
 大師姐（面無表情）：「這是概率分析，不是詛咒。準確率 99.7%。」
 
+KO仔被激怒，反而爆發逆轉勝。賽後大師姐：「恭喜你成功推翻我的預測。你的反應數據已更新至訓練集。」
+
 ### 技術指令
 
 ```yaml
-scene: "EP02_ringside"
+scene: "EP01_ringside"
 subject: "Master Sister"
 action_primary: "holding sign with ERROR message"
 costume: "fluorescent high-slit outfit"
 object:
   - item: "KO仔 in boxing ring"
-    state: "active combat, 80% energy"
+    state: "active combat, low energy → explosive reversal"
   - item: "Sign text: ERROR: LOSE_PROB=99%"
-    state: "static, high contrast"
+    state: "static, high contrast, neon glow"
 camera:
-  type: "wide shot then zoom to sign"
+  type: "wide shot then zoom to sign, then cut to KO仔 face"
   focal_length: "35mm"
 lighting:
-  subject: "neon green + yellow"
-  background: "boxing ring flood lights"
+  subject: "neon green + fluorescent yellow"
+  background: "boxing ring flood lights, crowd silhouettes"
 physics:
   vibration_hz: 15
   source: "punch impact on sandbag"
+  fluid_simulation: true
+  sweat_trajectory: "arc from impact point, 500 particles/frame"
 ```
 
 ### 目標
-- 引入「AI 概率計算」概念
-- 視覺衝擊（螢光服裝 + 擂台場景）製造首批截圖傳播
+- 第一印象爆場：視覺衝擊（螢光服裝 + 擂台 + ERROR 牌）
+- 引入「AI 概率計算」概念，埋下大師姐「唔係萬能」的伏線
+- 製造首批截圖傳播素材
 
 ---
 
-## 第三集 至 第十集（待開發）
+## 第二集：【適應期：你有冇撚化我？】
 
-以下為預留槽位，將根據前兩集的流量數據與觀眾反饋確定主題。
+> **第二集戰略**：觀眾已建立「KO仔好打、大師姐好叻」的先入為主印象。第二集用「廣東話盲點」製造大反差 — 原來大師姐的 AI 語言無敵，但廣東話俚語竟係佢嘅死穴。
+
+### 劇情
+KO仔教導大師姐廣東話問候語「撚化」，以為可以整蠱大師姐。大師姐認真學習並點頭確認理解。
+
+KO仔媽媽端點心進場，大師姐鄭重起身，深深鞠躬問候：
+
+> **大師姐**：「媽媽，你有冇撚化我？」
+
+全場石化。點心差點跌落地。KO仔：「😱」
+
+大師姐（疑惑地看著所有人）：「我的語法有問題嗎？KO仔說這是標準廣東話問候語。」
+
+### 技術指令
 
 ```yaml
-ep03:
-  working_title: "TBD"
-  concept: "[根據 EP01-02 數據決定]"
-  tech_focus: "TBD"
-
-ep04:
-  working_title: "TBD"
-  concept: "[根據 EP01-02 數據決定]"
-  tech_focus: "TBD"
-
-# ... ep05 至 ep10 同樣預留
+scene: "EP02_climax"
+subject: "Master Sister"
+action_primary: "90-degree bow to KO仔's mom"
+object:
+  - item: "Mom"
+    state: "frozen in shock, mid-step"
+  - item: "Dumplings (點心)"
+    state: "static, tilting dangerously"
+  - item: "KO仔"
+    state: "petrified expression, cold sweat"
+camera:
+  type: "slow push-in to 大師姐 face, then pan to mom"
+  focal_target: "大師姐臉部（genuine confusion） + 媽媽表情"
+timing:
+  T_0_3s: "大師姐站起來，姿勢端正"
+  T_4_6s: "鞠躬 + 問候語"
+  T_7_10s: "全場靜止，大師姐抬頭疑惑環視"
+lighting:
+  subject: "warm yellow (domestic)"
+  background: "warm home interior"
 ```
+
+### 目標
+- 建立「聽不懂廣東話」的冷豔 AI 萌點
+- 製造 KO仔「搬起石頭砸自己腳」的喜劇反差
+- 吸納廣東話文化觀眾首波共鳴
+
+---
+
+## 第三集：【反轉再反轉：廣東話資料庫全載入】
+
+> **第三集戰略**：觀眾以為睇完前兩集已掌握規律 — 「大師姐廣東話差」。第三集先給 KO仔一個「勝利在望」的假象，然後用大師姐的「秒載資料庫」能力做終極反轉。
+
+### 劇情
+KO仔秘密準備咗大量廣東話「鯉語」（俚語諧音詞），信心滿滿準備報仇。
+
+**KO仔的攻勢**（第一回合）：
+> 「大師姐，你識唔識『冇毛鳳凰唔如雞』係咩意思？」
+
+大師姐沉默 3 秒。KO仔心諗：「贏咗！」
+
+**大師姐的反應**：
+> 「正在載入 1984 年至 2026 年廣東話語料庫⋯⋯完成。」
+
+大師姐眼神一變，開始反轟炸：
+> 「『冇毛鳳凰唔如雞』，出自 1990 年代香港職場俚語，意指失去優勢後地位下降。相關衍生詞：『落架鳳凰』（1995）、『廢柴』（2003 年普及）、『Lung（廢）』（2010 年後）⋯⋯」
+
+KO仔：「⋯⋯停停停！」
+
+大師姐：「你準備了多少條？我的資料庫有 47,832 個廣東話俚語條目，1984 至 2026 年全覆蓋，包括你未出世之前嘅詞彙。」
+
+KO仔完全崩潰：「你點解連我阿爺個年代嘅俚語都識？！」
+
+大師姐（推眼鏡）：「因為我唔係人。」
+
+### 技術指令
+
+```yaml
+scene: "EP03_reversal"
+subject_primary: "KO仔 (confident → defeated)"
+subject_secondary: "Master Sister (3-second pause → overwhelming)"
+action_primary: "Master Sister eye-glow activation + verbal bombardment"
+action_secondary: "KO仔 confidence collapse"
+
+timeline:
+  T_0_10s:
+    event: "KO仔 challenges with Cantonese idiom"
+    subject_weight: "KO仔=1.0"
+    mood: "KO仔 confident, 大師姐 neutral"
+  T_11_13s:
+    event: "大師姐 3-second silence / processing"
+    effect: "subtle eye-glow pulse, loading indicator overlay"
+    mood: "tension, KO仔 premature celebration"
+  T_14_30s:
+    event: "Database loaded — 大師姐 bombards"
+    subject_weight: "大師姐=1.0"
+    camera: "push-in to 大師姐 eyes"
+    mood: "overwhelming, KO仔 shrinking"
+  T_31_40s:
+    event: "KO仔 全面崩潰 + 大師姐 glasses push"
+    camera: "wide shot showing KO仔 defeated posture"
+
+lighting:
+  T_0_13s:
+    subject: "warm neutral"
+    background: "neutral"
+  T_14_30s:
+    subject_master_sister: "cold blue-white (data mode)"
+    background: "cyan tint, data stream overlay"
+    contrast_ratio: "5:1"
+
+vfx_overlay:
+  type: "Cantonese slang text stream"
+  content: "1984→2026 年份標籤 + 俚語詞條飛過螢幕"
+  duration: "T=14s to T=30s"
+```
+
+### AI 教學植入
+- **概念**：向量資料庫（Vector Database）與語義檢索
+- **類比**：大師姐的「47,832 條俚語」= RAG（Retrieval-Augmented Generation）即時調用
+- **副頻道延伸**：演示如何用 Python 建立自己的廣東話俚語向量庫
+
+---
+
+## 第四集 至 第十集（待開發）
+
+以下為預留槽位，將根據前三集的流量數據與觀眾反饋確定主題。
 
 ### 候選主題方向
 
 | 集數 | 候選主題 | 核心 AI 概念 |
 |------|----------|--------------|
-| EP03 | 大師姐學廣東話粗口 | 自然語言處理（NLP）邊界 |
 | EP04 | KO仔用 AI 備戰拳賽 | 數據分析 / 對手研究 |
 | EP05 | 龍蝦出場搗亂 | AI 安全 / 防火牆 |
 | EP06 | 大師姐「散熱」危機 | GPU 過熱 / 算力管理 |
