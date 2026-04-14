@@ -1,0 +1,217 @@
+---
+title: "AI導演時間線 v1"
+description: "從概念到視頻：AI導演工作流程的完整時間線"
+---
+
+# AI導演時間線 v1
+
+> **工作流程核心**：每一步都是人作決定，AI執行。黑板上的邏輯由你寫，AI照著行。
+
+---
+
+## 整體流程圖
+
+```
+[你的想法]
+     ↓
+[餵食訓練：逆向工程電影]
+     ↓
+[建立導演手冊（存入MCP記憶庫）]
+     ↓
+[你給主題/方向]
+     ↓
+[AI生成結構化劇本（YAML/程式碼）]
+     ↓
+[你審核 + 修改]
+     ↓
+[AI分段生成視頻場景]
+     ↓
+[你剪接 + 最終審核]
+     ↓
+[發布]
+```
+
+---
+
+## 階段一：訓練期（一次性設定）
+
+**目標**：讓AI理解你要的導演風格
+
+### 步驟 1.1 — 逆向工程電影清單
+
+選3-5套你喜歡風格的電影，叫AI逐一拆解：
+
+```
+請逆向工程分析以下電影的導演手法，輸出：
+1. 鏡頭語言規律
+2. 節奏控制方法
+3. 情緒建立技巧
+4. 配樂使用規律
+
+電影：[你選的電影名]
+```
+
+### 步驟 1.2 — 建立導演手冊
+
+將逆向工程結果整理成導演手冊，存入MCP記憶庫：
+
+```markdown
+# 我的導演手冊 v1
+
+## 鏡頭語言
+- 開場永遠用廣角建立世界觀
+- 情緒高峰用特寫
+- 轉場用匹配剪輯
+
+## 節奏規律
+- 前10%建立懸念
+- 中間60%發展衝突
+- 最後30%解決+餘韻
+
+## 禁止事項
+- 不用過多旁白解釋
+- 不用陳腔濫調的配樂
+```
+
+### 步驟 1.3 — 測試導演手冊
+
+用一個簡單的30秒片段測試，確認AI理解你的風格。
+
+---
+
+## 階段二：創作期（每條視頻）
+
+### 步驟 2.1 — 你給種子
+
+```
+主題：[一句話]
+目標觀眾：[誰]
+長度：[幾分鐘]
+情緒基調：[緊張/溫暖/震驚/...]
+```
+
+### 步驟 2.2 — AI生成場景結構
+
+AI根據導演手冊，輸出結構化劇本：
+
+```yaml
+video:
+  title: "..."
+  duration: "5min"
+  scenes:
+    - id: SC001
+      duration: "30s"
+      type: "hook"
+      visual: "..."
+      audio: "..."
+    - id: SC002
+      duration: "45s"
+      type: "setup"
+      ...
+```
+
+### 步驟 2.3 — 你審核劇本結構
+
+**你要決定的事**：
+- ✅ 場景順序是否合理？
+- ✅ 情緒曲線是否符合你的想法？
+- ✅ 有沒有多餘/缺少的場景？
+
+### 步驟 2.4 — 分段生成視頻
+
+每個scene獨立生成（低算力策略）：
+
+| Scene | 生成工具 | 備註 |
+|-------|---------|------|
+| 旁白/說話場景 | HeyGen / ElevenLabs | 純聲音最省算力 |
+| 風景/氛圍場景 | Runway / Kling | 靜態鏡頭優先 |
+| 文字動畫 | CapCut / Canva | 無需AI生成 |
+| 角色動作 | Sora / Pika | 只用於關鍵場景 |
+
+### 步驟 2.5 — 你剪接
+
+用CapCut或DaVinci Resolve，按劇本順序拼合所有scene。
+
+---
+
+## 階段三：迭代期（持續優化）
+
+### 每條視頻後更新導演手冊
+
+```
+這條視頻效果好/差的地方：
+- [觀察1]
+- [觀察2]
+
+需要更新導演手冊的規則：
+- [新規則]
+```
+
+存入MCP記憶庫，下一條視頻自動應用。
+
+---
+
+## MCP記憶庫 + GitHub同步設定（Windows版）
+
+### 安裝步驟
+
+**1. 安裝Node.js**（如未安裝）：[nodejs.org](https://nodejs.org)
+
+**2. 建立記憶庫資料夾**：
+```
+C:\Users\dic223\OneDrive\Documents\dic223\software-workspace\ai-brain\
+```
+
+**3. Claude Desktop設定**
+
+打開：`C:\Users\dic223\AppData\Roaming\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {
+        "MEMORY_FILE_PATH": "C:\\Users\\dic223\\OneDrive\\Documents\\dic223\\software-workspace\\ai-brain\\memory.json"
+      }
+    }
+  }
+}
+```
+
+**4. GitHub同步**（在PowerShell執行）：
+```powershell
+# 初始化
+cd C:\Users\dic223\OneDrive\Documents\dic223\software-workspace\ai-brain
+git init
+git remote add origin https://github.com/dicwong630-jpg/ai-brain.git
+
+# 每次對話後同步
+git add memory.json
+git commit -m "sync $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+git push origin main
+```
+
+**5. 自動同步腳本** — 存為 `sync.ps1`：
+```powershell
+Set-Location "C:\Users\dic223\OneDrive\Documents\dic223\software-workspace\ai-brain"
+git add memory.json
+git commit -m "auto-sync $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+git push origin main
+Write-Host "✅ 記憶庫已同步到GitHub"
+```
+
+---
+
+## 版本記錄
+
+| 版本 | 日期 | 更新內容 |
+|------|------|---------|
+| v1.0 | 2026-04-14 | 初始版本，建立基本框架 |
+
+---
+
+## 相關文件
+
+- [AI導演核心系統 v1](/ai-director/core-v1) — 核心概念與策略
