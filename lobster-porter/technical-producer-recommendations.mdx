@@ -1,0 +1,211 @@
+---
+title: "技術製片建議"
+description: "以技術製片視角，針對龍蝦搬運工的現狀缺口，條列優先強化建議"
+icon: "list-check"
+---
+
+## 前言
+
+`lobster_porter` v1.0 已可覆蓋**劇本開發與前期製作**約 90% 的本地資產整理需求。以下建議以「影響面 × 實施難度」排序，協助製片團隊在最短時間內補足最關鍵缺口。
+
+---
+
+## 優先級一：立即可做（本機，低成本）
+
+### 1. 加入 MD5 / SHA-256 Checksum 驗證插件
+
+**問題**：大型影片原檔（`.r3d`、`.mxf`）搬運後無法確認資料完整性，一旦損毀難以察覺。
+
+**建議**：
+
+```python
+# 建議新增 plugins/checksum_plugin.py
+import hashlib
+from lobster_porter.plugins import BasePlugin
+from pathlib import Path
+
+class ChecksumPlugin(BasePlugin):
+    def on_after_transfer(self, action, src, dst, record):
+        src_hash = self._md5(src if action == "copy" else dst)
+        # 寫入 .md5 sidecar 檔案
+        (dst.parent / (dst.name + ".md5")).write_text(src_hash)
+
+    def _md5(self, path: Path) -> str:
+        h = hashlib.md5()
+        with open(path, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                h.update(chunk)
+        return h.hexdigest()
+```
+
+**效益**：保障每日收材（DIT）安全，符合電影業界標準。
+
+---
+
+### 2. DIT 日報自動生成（CSV / HTML）
+
+**問題**：`LoggerPlugin` 僅記錄原始操作流水，無法直接給製片主任或導演閱讀。
+
+**建議**：新增 `DitReportPlugin`，在每批次結束後輸出包含：
+
+- 日期、場次編號
+- 檔案數量、總容量（GB）
+- 成功 / 失敗數量
+- MD5 核對狀態
+
+**格式**：HTML（可直接轉 PDF 列印）或 CSV（可匯入 Google Sheets）。
+
+---
+
+### 3. 語意版本命名規範插件
+
+**問題**：電影業界最常見的噩夢——`final_v2_REAL_final_ok2.fdx`。
+
+**建議**：新增 `SemanticVersionPlugin`，強制執行命名規範：
+
+```
+{project}_{department}_{scene}_{version}.{ext}
+例：LOBSTER_SCRIPT_SC01_v003.fountain
+```
+
+搬運時自動重命名，避免版本混亂。
+
+---
+
+## 優先級二：中期強化（1-2 週）
+
+### 4. 批量來源清單（Source Manifest）支援
+
+**問題**：多張記憶卡、多個攝影組的素材需要分批收材，目前需多次呼叫 CLI。
+
+**建議**：CLI 新增 `--sources-file sources.yaml` 選項，讀取批次來源清單：
+
+```yaml
+# sources.yaml
+sources:
+  - src: /Volumes/CARD_A/
+    dst: /NAS/project/day01/cam_a/
+    pattern: "*.r3d"
+  - src: /Volumes/CARD_B/
+    dst: /NAS/project/day01/cam_b/
+    pattern: "*.r3d"
+```
+
+---
+
+### 5. 元資料讀取插件（EXIF / ffprobe）
+
+**問題**：圖片與影片的元資料（拍攝日期、鏡頭、時碼）無法自動提取，需人手填寫。
+
+**建議**：
+
+- 圖片：整合 `Pillow` 讀取 EXIF
+- 影片：呼叫 `ffprobe`（FFmpeg）提取 timecode、reel name、codec
+- 輸出補充至 `tags.json` manifest
+
+```bash
+# 確認 ffprobe 是否已安裝
+ffprobe -version
+```
+
+---
+
+### 6. 非同步並行搬運（AsyncPorter）
+
+**問題**：目前為同步單線程，搬運數千個大型素材時會阻塞整個流程。
+
+**建議**：
+
+```python
+# 未來 AsyncPorter API 草案
+import asyncio
+from lobster_porter.core import LobsterPorter
+
+class AsyncPorter(LobsterPorter):
+    async def async_batch_move(self, src_dir, dst_dir, *, workers=4):
+        ...  # 使用 asyncio + ThreadPoolExecutor
+```
+
+對於 NAS / 本地磁碟搬運，4-8 個並行線程即可顯著提速。
+
+---
+
+## 優先級三：架構升級（「龍蝦大腦」層）
+
+### 7. 任務調度器（Task Orchestrator）
+
+**問題**：製片流程有嚴格的前後依賴（e.g. 先收材 → 驗 checksum → 轉碼 → 備份），工具目前無法表達這種依賴關係。
+
+**建議架構**：
+
+```
+TaskGraph（有向無環圖）
+    ↓
+Scheduler（排程器）
+    ↓
+Worker Pool（工人池）
+    ↓
+LobsterPorter（搬運工）+ 各種 Plugin
+```
+
+可參考 Apache Airflow 的 DAG 概念，但輕量化為本地 Python 實作。
+
+---
+
+### 8. 雲端同步插件（Cloud Sync）
+
+**問題**：製作期間美術、剪接、VFX 各組分處不同地點，本地工具無法解決跨地協作。
+
+**建議**：
+
+- 短期：整合 `rclone`（支援 Google Drive / S3 / Dropbox）作為搬運後端
+- 中期：開發 `CloudPlugin`，在 `on_after_transfer` 鉤子中觸發雲端上傳
+- 長期：考慮整合 Frame.io / ShotGrid 的 API
+
+---
+
+### 9. 素材搜尋索引（Asset Search Index）
+
+**問題**：當素材庫達到數萬個檔案時，需要可全文搜尋、過濾標籤的介面。
+
+**建議**：
+
+- 使用 `sqlite3`（Python 內建）建立本地索引資料庫
+- 索引欄位：`path`, `category`, `tag`, `checksum`, `size`, `mtime`
+- 提供 CLI 搜尋：`python -m lobster_porter search --tag "sc01" --category "video"`
+
+---
+
+## 優先級四：交付階段
+
+### 10. 交付清單自動生成（Delivery List）
+
+**建議**：新增 `deliver` 子命令，根據 manifest 和規則模板自動生成符合廣播商/院線規格的交付清單。
+
+```bash
+python -m lobster_porter deliver --template broadcast_hk.yaml --output delivery_list.pdf
+```
+
+---
+
+## 總結矩陣
+
+| 建議 | 優先級 | 實施難度 | 影響環節 |
+|---|---|---|---|
+| MD5 Checksum 驗證插件 | 🔴 立即 | 低 | 拍攝期、後製 |
+| DIT 日報自動生成 | 🔴 立即 | 低 | 拍攝期 |
+| 語意版本命名插件 | 🔴 立即 | 低 | 全程 |
+| 批量來源清單支援 | 🟡 中期 | 中 | 拍攝期 |
+| 元資料讀取（EXIF/ffprobe）| 🟡 中期 | 中 | 前期、後製 |
+| 非同步並行搬運 | 🟡 中期 | 中 | 後製 |
+| 任務調度器（大腦層） | 🟢 架構 | 高 | 全程 |
+| 雲端同步插件 | 🟢 架構 | 高 | 全程協作 |
+| 素材搜尋索引 | 🟢 架構 | 中 | 後製 |
+| 交付清單生成 | 🟢 架構 | 中 | 發行交付 |
+
+---
+
+## 相關頁面
+
+- [龍蝦搬運工概覽](/lobster-porter/overview)
+- [電影製作流程覆蓋分析](/lobster-porter/film-production-coverage)

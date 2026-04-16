@@ -1,0 +1,146 @@
+---
+title: "龍蝦搬運工（Lobster Porter）"
+description: "本地電影製作資產批量搬運、分類與標籤工具包"
+icon: "box-archive"
+---
+
+## 簡介
+
+**龍蝦搬運工（lobster_porter）** 是一個以 Python 實作的批量檔案搬運與分類工具包，專為解決電影製作流程中大量資產（腳本、分鏡、美術稿、AI Prompt、影音素材）需要在本地電腦上有序流轉的痛點而設計。
+
+```
+lobster_porter/
+├── __init__.py        # 公開 API
+├── __main__.py        # 命令行介面（CLI）
+├── core.py            # LobsterPorter 核心引擎
+├── strategies.py      # 分類策略（副檔名、關鍵字、日期）
+└── plugins/
+    ├── __init__.py         # BasePlugin 基礎類
+    ├── logger_plugin.py    # 轉移日誌插件
+    └── rename_plugin.py    # 自動重命名插件
+```
+
+---
+
+## 快速開始
+
+### 安裝
+
+```bash
+# 直接於專案目錄使用（無需額外安裝）
+python -m lobster_porter --help
+```
+
+### 批量移動
+
+```bash
+python -m lobster_porter move raw_assets/ organised/ --pattern "*.fountain"
+```
+
+### 批量複製（遞迴）
+
+```bash
+python -m lobster_porter copy raw_assets/ backup/ --recursive
+```
+
+### 按副檔名自動分類
+
+```bash
+python -m lobster_porter categorize raw_assets/ sorted_assets/
+```
+
+分類結果範例：
+
+```
+sorted_assets/
+├── scripts/        # .fountain .fdx .txt .md
+├── documents/      # .docx .pdf
+├── storyboards/    # .psd
+├── images/         # .png .jpg .tif
+├── prompts/        # .json .yaml
+├── audio/          # .wav .mp3 .flac
+├── video/          # .mov .mp4 .mxf .r3d
+└── vfx/            # .blend .ma .obj .fbx .usd
+```
+
+### 批量標籤 + 輸出清單
+
+```bash
+python -m lobster_porter tag raw_assets/ --manifest tags.json
+```
+
+---
+
+## Python API
+
+```python
+from lobster_porter import LobsterPorter, ExtensionStrategy
+from lobster_porter.plugins.logger_plugin import LoggerPlugin
+
+porter = LobsterPorter(
+    strategy=ExtensionStrategy(),
+    plugins=[LoggerPlugin("ops.log")],
+    log_path="ops.json",   # JSON 操作日誌，支援 undo
+    dry_run=False,
+)
+
+# 批量搬運
+porter.batch_move("raw/", "organised/", pattern="*.fountain")
+
+# 按類型歸類
+porter.batch_categorize("raw/", "sorted/")
+
+# 撤銷最後一步
+porter.undo_last()
+
+# 撤銷全部
+porter.undo_all()
+```
+
+---
+
+## 核心特性
+
+<CardGroup cols={2}>
+  <Card title="批量移動／複製" icon="arrows-left-right">
+    支援 glob 模式篩選、遞迴走訪，一行命令搬遷數百個素材。
+  </Card>
+  <Card title="自動分類策略" icon="folder-tree">
+    內建副檔名、關鍵字、日期三種策略，可組合或自訂。
+  </Card>
+  <Card title="操作日誌與撤銷" icon="clock-rotate-left">
+    每次操作寫入 JSON 日誌，支援 `undo_last()` 與 `undo_all()`。
+  </Card>
+  <Card title="插件擴展" icon="puzzle-piece">
+    透過 `BasePlugin` 鉤子（before/after transfer）注入自訂邏輯。
+  </Card>
+</CardGroup>
+
+---
+
+## 進階：自訂策略
+
+```python
+from lobster_porter.strategies import KeywordStrategy, ChainStrategy, ExtensionStrategy
+
+rules = [
+    ("sc_",    "scenes"),
+    ("bg_",    "backgrounds"),
+    ("char_",  "characters"),
+    ("sfx_",   "sound_effects"),
+]
+
+porter = LobsterPorter(
+    strategy=ChainStrategy([
+        KeywordStrategy(rules),
+        ExtensionStrategy(),   # 關鍵字無匹配時，回退到副檔名分類
+    ])
+)
+```
+
+---
+
+## 相關頁面
+
+- [電影製作流程覆蓋分析](/lobster-porter/film-production-coverage)
+- [技術製片建議](/lobster-porter/technical-producer-recommendations)

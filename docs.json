@@ -44,6 +44,14 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "龍蝦搬運工",
+            "pages": [
+              "lobster-porter/overview",
+              "lobster-porter/film-production-coverage",
+              "lobster-porter/technical-producer-recommendations"
+            ]
           }
         ]
       },
