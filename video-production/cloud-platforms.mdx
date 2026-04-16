@@ -1,0 +1,364 @@
+---
+title: "雲端平台比較：ko仔語言教學10 影音製作"
+description: "全面比較各大雲端平台在 YouTube 教學視頻製作、自動化資料流與批量素材管理的適用性，並依三階段提供龍蝦搬運工專案的具體建議路線"
+---
+
+## 背景與目標
+
+為實現「**ko仔語言教學10**」系列 YouTube 視頻的完整製作流程，本頁比較市面上主流可用雲端平台，涵蓋：
+
+- 教學腳本自動生成
+- 批量素材搬運與分類（龍蝦搬運工 / lobster_porter）
+- 影音內容組裝與格式轉換
+- 多人協作與版本管理
+- 無需本地大型部署的全雲端流水線
+
+---
+
+## 1. 各平台場景適用性比較
+
+<AccordionGroup>
+
+<Accordion title="GitHub（Copilot）+ GitHub Actions" icon="github" defaultOpen>
+
+| 維度 | 說明 |
+|------|------|
+| **腳本協作與版本管理** | ✅ 最佳，所有腳本、素材元資料、工作流定義均可版本化 |
+| **自動化資料流** | ✅ Actions 可觸發批量素材整理、標籤、推送至儲存服務 |
+| **影音直接合成** | ❌ 不含原生影音渲染，需搭配 FFmpeg 腳本或外部服務 |
+| **免費額度** | ✅ 公開倉庫免費 Actions 分鐘數充足；私有倉庫有限制 |
+| **適合場景** | CI/CD 腳本驅動的素材整理、教學腳本生成、結果推送 |
+
+**最適合**：工作流大腦、版本控制、自動化觸發器
+
+</Accordion>
+
+<Accordion title="Google Colab" icon="google">
+
+| 維度 | 說明 |
+|------|------|
+| **互動式腳本開發** | ✅ Jupyter 筆記本，適合快速原型與 AI 生成實驗 |
+| **GPU 資源** | ✅ 免費 T4 GPU，適合圖像/音訊 AI 推理 |
+| **持久化儲存** | ⚠️ 無原生持久化；需掛載 Google Drive |
+| **批量自動化** | ⚠️ 無排程功能，需手動執行或搭配 Colab API |
+| **影音合成** | ✅ 可安裝 MoviePy、FFmpeg，在 Colab 執行合成腳本 |
+| **適合場景** | 個人實驗、AI 生成字幕/配音測試、快速原型 |
+
+**最適合**：PoC 階段的 AI 影像/音訊測試
+
+</Accordion>
+
+<Accordion title="Kaggle Notebooks" icon="database">
+
+| 維度 | 說明 |
+|------|------|
+| **免費 GPU/TPU** | ✅ 每週 30 小時 GPU，適合訓練或批量推理 |
+| **公開資料集整合** | ✅ 可掛載公開語言教學資料集 |
+| **排程執行** | ✅ 支援 Scheduled Notebooks |
+| **協作** | ⚠️ 以個人/公開 notebook 為主，團隊協作功能有限 |
+| **影音合成** | ⚠️ 可用但不是主流用途，儲存限制較多 |
+| **適合場景** | 語言模型微調、字幕生成批量推理 |
+
+**最適合**：批量 AI 推理任務（含排程）
+
+</Accordion>
+
+<Accordion title="Microsoft Azure（Notebook + Media Services）" icon="microsoft">
+
+| 維度 | 說明 |
+|------|------|
+| **Azure Machine Learning** | ✅ 企業級 ML 管線，支援排程、監控、版本管理 |
+| **Azure Media Services** | ✅ 原生支援影片編碼、轉碼、字幕索引、串流發布 |
+| **Azure Blob Storage** | ✅ 大規模素材儲存，支援生命週期管理 |
+| **成本** | ⚠️ 按使用量計費，初期成本較高；有免費試用額度 |
+| **協作** | ✅ Azure DevOps / GitHub 整合，多人協作完善 |
+| **適合場景** | 大規模影音轉碼、字幕自動索引、多語言教學平台 |
+
+**最適合**：持續優化/多用戶協作、龐大內容生成階段
+
+</Accordion>
+
+<Accordion title="AWS（S3 + SageMaker + MediaConvert）" icon="aws">
+
+| 維度 | 說明 |
+|------|------|
+| **S3** | ✅ 業界標準素材儲存，支援版本控制與生命週期規則 |
+| **SageMaker** | ✅ 完整 ML 平台，支援訓練、部署、批量推理管線 |
+| **MediaConvert** | ✅ 全托管影片轉碼，支援批量作業與自訂設定檔 |
+| **Lambda + Step Functions** | ✅ 事件驅動自動化，素材上傳後自動觸發分類/轉碼 |
+| **成本** | ⚠️ 彈性計費，需設定預算警示；免費方案有限 |
+| **適合場景** | 全自動化影音管線、批量字幕生成、大規模內容分發 |
+
+**最適合**：龐大內容生成、生產級自動化管線
+
+</Accordion>
+
+<Accordion title="HuggingFace Spaces" icon="robot">
+
+| 維度 | 說明 |
+|------|------|
+| **AI 模型部署** | ✅ 一鍵部署 Gradio / Streamlit 應用，免費 CPU 空間 |
+| **預訓練模型** | ✅ 豐富的語言、語音、影像模型，開箱即用 |
+| **持久化儲存** | ⚠️ 免費方案空間有限；Datasets Hub 可存放資料 |
+| **API 呼叫** | ✅ Inference API 可程式化呼叫，整合入自動化流程 |
+| **協作** | ✅ 組織帳戶支援多人協作、私有模型共享 |
+| **適合場景** | 字幕生成（Whisper）、文字翻譯、TTS 配音、教學腳本 AI 生成 |
+
+**最適合**：AI 輔助內容生成（字幕、翻譯、配音）
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## 2. 無需本地部署、支持批量自動流的平台篩選
+
+以下平台可做到「**不依賴本地機器、程式化搬運分類、批量影音組裝**」：
+
+<CardGroup cols={2}>
+  <Card title="GitHub Actions" icon="gear">
+    觸發器驅動的全雲端 CI/CD，可搭配 FFmpeg、Python 腳本執行素材整理與格式轉換，免費額度適合初期
+  </Card>
+  <Card title="AWS Lambda + S3 + MediaConvert" icon="bolt">
+    素材上傳 S3 自動觸發 Lambda，呼叫 MediaConvert 批量轉碼；完全無伺服器，按使用量計費
+  </Card>
+  <Card title="Kaggle Scheduled Notebooks" icon="clock">
+    免費排程執行，適合定時批量 AI 推理（字幕生成、分類標籤），結果儲存至 Kaggle Dataset
+  </Card>
+  <Card title="HuggingFace Inference API" icon="microchip">
+    程式化呼叫 Whisper / NLLB / TTS 模型，無需本地 GPU，整合入任意雲端流程
+  </Card>
+</CardGroup>
+
+---
+
+## 3. 依龍蝦搬運工架構推薦三大方案
+
+### 方案 A：GitHub Actions + HuggingFace API（最輕量，零成本起步）
+
+```
+lobster_porter repo
+       │
+       ├─ push / cron trigger
+       │
+       ▼
+GitHub Actions Workflow
+  ├─ 呼叫 HuggingFace Whisper API → 生成字幕 (.srt)
+  ├─ 呼叫 NLLB 翻譯 API → 粵語/普通話/英語字幕
+  ├─ FFmpeg 合成字幕 + 素材影片 → MP4
+  └─ 上傳至 GitHub Release / Artifact
+```
+
+**優點**：完全免費、流程在 repo 內透明可見、Copilot 可直接協助撰寫 Workflow YAML  
+**限制**：Actions 執行時間限制（6小時/job），大型影片需切割
+
+---
+
+### 方案 B：GitHub + Kaggle + HuggingFace（PoC 到持續優化）
+
+```
+lobster_porter repo
+       │
+       ├─ 素材元資料 / 腳本 JSON 推送
+       │
+       ▼
+Kaggle Scheduled Notebook
+  ├─ 讀取腳本 JSON → 批量呼叫 HuggingFace TTS 生成配音
+  ├─ 批量字幕生成（Whisper large-v3）
+  ├─ MoviePy / FFmpeg 影片組裝
+  └─ 輸出存至 Kaggle Dataset → 手動下載或 API 取回
+```
+
+**優點**：免費 GPU、排程自動執行、適合多集批量製作  
+**限制**：Kaggle 儲存空間有限，需定期清理；協作介面較簡陋
+
+---
+
+### 方案 C：GitHub + AWS S3 + MediaConvert（生產級全自動管線）
+
+```
+lobster_porter repo
+       │
+       ├─ GitHub Actions 觸發
+       │
+       ▼
+AWS S3 素材桶
+  ├─ Lambda 函數自動觸發（素材上傳事件）
+  │   ├─ 呼叫 SageMaker Endpoint（字幕/分類 AI）
+  │   └─ 提交 MediaConvert 轉碼作業
+  │
+  ▼
+S3 輸出桶（成品 MP4）
+  └─ CloudFront CDN 發布 / 直接上傳 YouTube API
+```
+
+**優點**：完全自動化、可擴展至任意規模、MediaConvert 支援 HDR/4K/字幕嵌入  
+**限制**：需 AWS 帳戶、初期設定成本與學習曲線較高
+
+---
+
+## 4. 三階段建議路線
+
+<Steps>
+
+<Step title="初發表 / PoC 階段（第 1–4 週）">
+
+**目標**：製作第一支 3 分鐘 ko仔語言教學10 樣本影片，驗證流程可行
+
+**推薦方案**：方案 A（GitHub Actions + HuggingFace API）
+
+**具體步驟**：
+
+1. 在 lobster_porter repo 新增 `.github/workflows/video-build.yml`
+2. 準備一段原始素材影片（MP4）和腳本文字（JSON/TXT）上傳至 repo
+3. Workflow 自動執行：
+   - 呼叫 HuggingFace Whisper 生成字幕
+   - FFmpeg 合成字幕與影片
+   - 上傳成品至 GitHub Releases
+4. 在 README 展示成果，收集社群初步反饋
+
+**所需設定**：
+```yaml
+# .github/workflows/video-build.yml
+name: Build Teaching Video
+on:
+  push:
+    paths:
+      - 'scripts/**'
+      - 'assets/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install FFmpeg
+        run: sudo apt-get install -y ffmpeg
+      - name: Generate subtitles via HuggingFace
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python scripts/generate_subtitles.py
+      - name: Assemble video
+        run: python scripts/assemble_video.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: teaching-video
+          path: output/*.mp4
+```
+
+</Step>
+
+<Step title="持續優化 / 多用戶協作階段（第 1–3 個月）">
+
+**目標**：批量製作多集教學影片，引入協作者分工，建立可重複的製作流程
+
+**推薦方案**：方案 B（GitHub + Kaggle + HuggingFace）
+
+**具體步驟**：
+
+1. 建立標準化腳本 JSON 格式（每集素材、旁白、字幕時間軸）
+2. Kaggle Notebook 定時（每週一次）批量處理：
+   - 讀取新增腳本 → 生成配音（TTS）→ 合成影片
+3. GitHub Issues 作為任務看板，協作者認領不同教學集製作
+4. Branch Protection：main 分支需 PR review 才可合併成片素材
+5. 使用 HuggingFace Spaces 部署字幕預覽 / 腳本生成 Demo
+
+**協作角色分工**：
+
+| 角色 | 負責 | 工具 |
+|------|------|------|
+| 專案負責人 | 最終審核、合併、發布決策 | GitHub（Admin） |
+| 腳本撰寫者 | 撰寫教學腳本 JSON | GitHub Issues / PR |
+| 技術維護者 | 維護 Workflow、修復 Bug | GitHub Actions |
+| 影片審核 | 測試成品影片 | GitHub Releases |
+
+</Step>
+
+<Step title="龐大內容生成階段（3 個月後）">
+
+**目標**：自動化生產 ko仔語言教學10 完整系列（50+ 集），支援多語言字幕與高清輸出
+
+**推薦方案**：方案 C（GitHub + AWS S3 + MediaConvert）
+
+**具體步驟**：
+
+1. 將所有素材遷移至 AWS S3，設定版本控制與生命週期規則
+2. 部署 Lambda 函數處理上傳事件，自動排隊 MediaConvert 作業
+3. SageMaker Batch Transform 批量生成多語言字幕（粵語→普通話→英語）
+4. MediaConvert 輸出多解析度版本（720p / 1080p）並嵌入字幕
+5. 設定 YouTube Data API 自動上傳與排程發布
+6. GitHub Actions 作為流程觸發入口，保持 repo 為唯一事實來源
+
+**成本估算**（每月 10 支 10 分鐘影片）：
+
+| 服務 | 用量 | 估算費用 |
+|------|------|----------|
+| S3 儲存 | 50 GB | ~USD 1.15 |
+| MediaConvert | 100 分鐘 | ~USD 1.50 |
+| SageMaker Batch | 10 作業 | ~USD 3–5 |
+| Lambda | 100 次呼叫 | < USD 0.01 |
+| **合計** | | **~USD 6–8 / 月** |
+
+</Step>
+
+</Steps>
+
+---
+
+## 5. 雲端完整影音製作架構示意
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  lobster_porter repo                │
+│  scripts/ ─ 教學腳本 JSON                           │
+│  assets/  ─ 素材影像、音效                          │
+│  .github/ ─ Actions Workflow                        │
+└──────────────────┬──────────────────────────────────┘
+                   │ push / cron
+                   ▼
+┌──────────────────────────────┐
+│      GitHub Actions          │
+│  - 腳本格式驗證               │
+│  - 呼叫 AI API               │
+│  - 觸發外部服務               │
+└──────┬──────────────┬────────┘
+       │              │
+       ▼              ▼
+┌──────────┐   ┌──────────────────┐
+│HuggingFace│   │  AWS S3 / Kaggle │
+│ Whisper  │   │  素材 / 成品儲存  │
+│ TTS / NLP│   └────────┬─────────┘
+└──────────┘            │
+                        ▼
+               ┌─────────────────┐
+               │ MediaConvert /  │
+               │ FFmpeg 影片合成  │
+               └────────┬────────┘
+                        │
+                        ▼
+               ┌─────────────────┐
+               │ YouTube / GitHub│
+               │ Releases 發布   │
+               └─────────────────┘
+```
+
+---
+
+## 6. 給外行創作者的快速起步建議
+
+<Tip>
+不需要懂所有技術細節。從最小可行方案開始，每一步都有 Copilot 協助撰寫腳本和 Workflow。
+</Tip>
+
+**立即可做的三件事**：
+
+1. **在 lobster_porter repo 新增 `scripts/` 目錄**，放入第一集教學腳本（純文字或 JSON）
+2. **申請 HuggingFace 免費帳戶**，取得 API Token，加入 GitHub repo Secrets
+3. **讓 Copilot 幫你生成第一個 `video-build.yml`** Workflow，觸發自動字幕生成
+
+完成這三步，你就已經有了一條從「文字腳本」到「帶字幕影片」的全雲端自動化管線。
+
+<Note>
+所有平台選擇均以「**不依賴本地高性能機器**、**開源透明**、**可逐步升級**」為原則，完全符合龍蝦搬運工專案的現有架構與你的初心——讓最好的技術人人可用。
+</Note>

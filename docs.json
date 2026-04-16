@@ -44,6 +44,12 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "影音製作",
+            "pages": [
+              "video-production/cloud-platforms"
+            ]
           }
         ]
       },
