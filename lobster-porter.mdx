@@ -1,0 +1,193 @@
+---
+title: 'Lobster Porter'
+description: '批量文件整理工具 — 搬運、分類、索引你的知識庫文件'
+---
+
+## 簡介
+
+**Lobster Porter**（龍蝦搬運工）是一個輕量 Python 工具套件，專為 docs 知識庫設計。它讓你能夠用一行命令批量搬運、複製、整理 Markdown、PDF、Word 等文件，同時透過插件機制自動建立索引、記錄日誌或進行標籤分類。
+
+核心設計理念：**策略模式（Strategy）** + **插件模式（Plugin）**，令整個架構極易擴展。
+
+---
+
+## 快速開始
+
+```bash
+# 複製整個 docs/raw 目錄到 docs/organised（預設行為）
+python -m lobster_porter --source docs/raw --destination docs/organised
+
+# 預覽（不實際修改任何檔案）
+python -m lobster_porter --source docs/raw --destination docs/organised --dry-run
+
+# 移動文件，同時生成索引
+python -m lobster_porter --source docs/raw --destination docs/organised \
+    --strategy move --plugins log index
+```
+
+---
+
+## 六個核心檔案
+
+| 檔案 | 職責 |
+|------|------|
+| `__init__.py` | 套件入口；匯出穩定的公開 API |
+| `config.py` | `Config` dataclass — 所有可調參數的單一來源 |
+| `core.py` | `Porter` 協調器 — 串聯 strategy 與 plugins |
+| `strategies.py` | `BaseStrategy` 協議 + 內建 `CopyStrategy`、`MoveStrategy` |
+| `plugins.py` | `BasePlugin` 協議 + 內建 `IndexPlugin`、`LogPlugin` |
+| `cli.py` | CLI 入口（`python -m lobster_porter`）與 strategy/plugin 登記表 |
+
+---
+
+## 架構圖
+
+```
+┌─────────────────────────────────────────────────┐
+│  Porter.run()                                   │
+│                                                 │
+│  1. 收集符合 file_patterns 的來源文件           │
+│  2. plugins[*].on_start(files, config)          │
+│  3. 逐一處理每個文件：                          │
+│       a. 確保目標目錄存在                       │
+│       b. strategy.execute(src, dst, config)     │
+│       c. plugins[*].on_file(src, dst, config)   │
+│  4. plugins[*].on_finish(files, config)         │
+└─────────────────────────────────────────────────┘
+```
+
+Porter 本身不知道「如何搬」（由 strategy 負責）也不知道「要做什麼附加動作」（由 plugins 負責）。這種分離令核心永遠穩定，擴展完全不需要修改核心。
+
+---
+
+## 如何加入新搬運策略
+
+1. 繼承 `BaseStrategy`，實作 `execute(source_file, destination_file, config)`。
+2. 把實例傳給 `Porter(strategy=YourStrategy())`。
+3. 如需從 CLI 呼叫，在 `cli.py` 的 `STRATEGY_MAP` 加上一行。
+
+```python
+from lobster_porter.strategies import BaseStrategy
+from lobster_porter.config import Config
+from pathlib import Path
+import zipfile
+
+class ArchiveStrategy(BaseStrategy):
+    """將所有文件壓縮到一個 ZIP 歸檔。"""
+
+    name = "archive"
+
+    def execute(self, source_file: Path, destination_file: Path, config: Config) -> None:
+        if config.dry_run:
+            return
+        zip_path = destination_file.with_suffix(".zip")
+        with zipfile.ZipFile(zip_path, "a") as zf:
+            zf.write(source_file, source_file.name)
+```
+
+在 `cli.py` 登記：
+
+```python
+# cli.py — STRATEGY_MAP
+STRATEGY_MAP = {
+    "copy": CopyStrategy,
+    "move": MoveStrategy,
+    "archive": ArchiveStrategy,   # ← 新增這一行
+}
+```
+
+---
+
+## 如何加入新插件
+
+插件有三個生命週期鉤子，按需覆寫即可：
+
+| 鉤子 | 呼叫時機 |
+|------|---------|
+| `on_start(files, config)` | 整個 run 開始前，呼叫一次 |
+| `on_file(src, dst, config)` | 每個文件搬運後，呼叫一次 |
+| `on_finish(files, config)` | 整個 run 完成後，呼叫一次 |
+
+```python
+from lobster_porter.plugins import BasePlugin
+from lobster_porter.config import Config
+from pathlib import Path
+
+class TagPlugin(BasePlugin):
+    """在每個 Markdown 文件末尾附加標籤註解。"""
+
+    name = "tag"
+
+    def on_file(self, source_file: Path, destination_file: Path, config: Config) -> None:
+        tag = config.extra.get("tag", "untagged")
+        if destination_file.suffix in (".md", ".mdx") and not config.dry_run:
+            with destination_file.open("a") as fh:
+                fh.write(f"\n<!-- tag: {tag} -->\n")
+```
+
+在 `cli.py` 登記：
+
+```python
+# cli.py — PLUGIN_MAP
+PLUGIN_MAP = {
+    "log": LogPlugin,
+    "index": IndexPlugin,
+    "tag": TagPlugin,   # ← 新增這一行
+}
+```
+
+---
+
+## Config 參數說明
+
+```python
+from lobster_porter import Config, Porter
+
+porter = Porter(config=Config(
+    source="docs/raw",          # 來源目錄
+    destination="docs/final",   # 目標目錄
+    file_patterns=["*.md", "*.mdx", "*.pdf"],  # 只處理這些格式
+    dry_run=False,              # True = 只預覽，不實際操作
+    overwrite=False,            # True = 覆寫已存在的目標文件
+    recursive=True,             # True = 遞迴子目錄
+    extra={"tag": "release"},   # 傳給插件的自訂參數
+))
+```
+
+---
+
+## Python API 範例
+
+```python
+from lobster_porter import Porter, Config
+from lobster_porter.strategies import CopyStrategy
+from lobster_porter.plugins import IndexPlugin, LogPlugin
+
+porter = Porter(
+    config=Config(source="docs/raw", destination="docs/organised"),
+    strategy=CopyStrategy(),
+    plugins=[LogPlugin(), IndexPlugin()],
+)
+
+processed = porter.run()
+print(f"共處理 {len(processed)} 個文件")
+```
+
+---
+
+## 擴展設計原則總結
+
+<CardGroup cols={2}>
+  <Card title="策略模式" icon="route">
+    新搬運邏輯繼承 `BaseStrategy`，不改動任何核心代碼。
+  </Card>
+  <Card title="插件模式" icon="plug">
+    新副作用繼承 `BasePlugin`，三個鉤子按需覆寫。
+  </Card>
+  <Card title="Config 集中化" icon="sliders">
+    所有參數從 `Config` 傳入，策略和插件不互相耦合。
+  </Card>
+  <Card title="CLI 登記表" icon="terminal">
+    `STRATEGY_MAP` 和 `PLUGIN_MAP` 是唯一需要修改的 CLI 注冊點。
+  </Card>
+</CardGroup>
