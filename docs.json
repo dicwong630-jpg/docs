@@ -44,6 +44,12 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "VSCode 指南",
+            "pages": [
+              "vscode/重新安裝指南"
+            ]
           }
         ]
       },

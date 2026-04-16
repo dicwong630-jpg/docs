@@ -1,0 +1,163 @@
+---
+title: "VSCode 重新安裝指南"
+description: "徹底移除 VSCode 後，安全重新安裝並設定繁體中文環境的完整步驟"
+icon: "code"
+---
+
+## 可以放心重新安裝了！
+
+恭喜你！你已成功徹底移除 VSCode 及所有相關設定檔案。現在可以放心重新下載並安裝最新版本的 VSCode，不會有任何舊設定殘留干擾，安裝後將呈現全新乾淨的狀態。
+
+---
+
+## 步驟一：下載最新版 VSCode
+
+前往 VSCode 官方網站下載最新版本：
+
+<Card
+  title="下載 Visual Studio Code"
+  icon="download"
+  href="https://code.visualstudio.com/"
+  horizontal
+>
+  前往官方網站，選擇適合你作業系統的版本（Windows / macOS / Linux）。
+</Card>
+
+<Steps>
+  <Step title="前往官方網站">
+    開啟瀏覽器，輸入網址 `https://code.visualstudio.com/`
+  </Step>
+  <Step title="選擇作業系統版本">
+    - **Windows**：點擊「Download for Windows」（Stable 穩定版）
+    - **macOS**：點擊「Download for Mac」
+    - **Linux**：依你的發行版選擇 `.deb`、`.rpm` 或其他格式
+  </Step>
+  <Step title="執行安裝程式">
+    下載完成後，雙擊安裝檔，依照安裝精靈指示完成安裝。
+    
+    <Info>
+      建議安裝時勾選「加入 PATH 環境變數」及「在右鍵選單加入『以 Code 開啟』」，日後使用更方便。
+    </Info>
+  </Step>
+</Steps>
+
+---
+
+## 步驟二：設定繁體中文介面
+
+安裝完成後，預設介面為英文。請依以下步驟切換為繁體中文：
+
+<Steps>
+  <Step title="安裝繁體中文語言包">
+    1. 開啟 VSCode
+    2. 點擊左側活動列的**擴充套件**圖示（Extensions），或按 `Ctrl+Shift+X`（Mac: `Cmd+Shift+X`）
+    3. 在搜尋欄輸入 `Chinese Traditional`
+    4. 找到 **Chinese (Traditional) Language Pack for Visual Studio Code**（由 Microsoft 官方提供）
+    5. 點擊「**Install**」安裝
+  </Step>
+  <Step title="套用語言設定">
+    1. 安裝完成後，按 `Ctrl+Shift+P`（Mac: `Cmd+Shift+P`）開啟命令選擇器
+    2. 輸入 `Configure Display Language`，選擇該選項
+    3. 在語言清單中選擇 `zh-tw`（繁體中文）
+    4. 點擊「**Restart**」重啟 VSCode
+  </Step>
+  <Step title="確認語言已套用">
+    重啟後，VSCode 介面應已切換為繁體中文。如選單、按鈕、提示文字均顯示繁體，即代表設定成功。
+  </Step>
+</Steps>
+
+---
+
+## 步驟三：基本設定建議
+
+完成語言設定後，建議進行以下基礎設定，讓 VSCode 更好用：
+
+### 字型設定
+
+開啟設定（`Ctrl+,` 或 Mac: `Cmd+,`），搜尋 `font`，建議：
+
+- **字型大小**：`14`（依個人偏好調整）
+- **字型家族**：`'Cascadia Code', 'Fira Code', Consolas, monospace`（支援連字的等寬字型）
+
+### 自動儲存
+
+搜尋 `auto save`，建議設為 `afterDelay`，讓 VSCode 自動定期儲存檔案，避免遺失工作。
+
+### 佈景主題
+
+1. 按 `Ctrl+K Ctrl+T`（Mac: `Cmd+K Cmd+T`）開啟主題選擇器
+2. 選擇你喜歡的深色或淺色主題，例如：
+   - **Dark+ (default dark)**：預設深色主題
+   - **Light+ (default light)**：預設淺色主題
+
+---
+
+## 常用擴充套件推薦
+
+以下是針對繁體中文使用者常用的擴充套件推薦：
+
+<Columns cols={2}>
+  <Card
+    title="Prettier"
+    icon="paintbrush"
+    href="https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode"
+  >
+    代碼格式化工具，支援多種語言，保持代碼整潔一致。
+  </Card>
+  <Card
+    title="GitLens"
+    icon="code-branch"
+    href="https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens"
+  >
+    強化 Git 功能，查看代碼修改歷史、比較版本差異。
+  </Card>
+  <Card
+    title="MDX"
+    icon="file-code"
+    href="https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx"
+  >
+    MDX 語法高亮支援，適合撰寫文件的用戶。
+  </Card>
+  <Card
+    title="Error Lens"
+    icon="triangle-exclamation"
+    href="https://marketplace.visualstudio.com/items?itemName=usernamehw.errorlens"
+  >
+    在代碼旁直接顯示錯誤與警告，快速定位問題。
+  </Card>
+</Columns>
+
+---
+
+## 常見問題
+
+<AccordionGroup>
+  <Accordion title="安裝後介面仍顯示英文，怎麼辦？">
+    請確認已安裝「Chinese (Traditional) Language Pack」並完成設定語言步驟。若問題持續：
+    1. 按 `Ctrl+Shift+P` 輸入 `Configure Display Language`
+    2. 確認選取 `zh-tw`
+    3. 重新啟動 VSCode
+    
+    若仍無效，嘗試在設定（`settings.json`）中手動加入 `"locale": "zh-tw"` 後重啟。
+  </Accordion>
+  <Accordion title="會不會有舊設定殘留的問題？">
+    不會。你已徹底移除 VSCode 本體及所有使用者設定目錄（如 `%APPDATA%\Code\` 及 `%USERPROFILE%\.vscode\`），重新安裝後完全是全新狀態，不會有任何舊設定、擴充套件或快取殘留。
+  </Accordion>
+  <Accordion title="如何備份我的設定，以便日後快速還原？">
+    VSCode 支援**設定同步（Settings Sync）**功能：
+    1. 點擊左下角帳戶圖示
+    2. 選擇「開啟設定同步」
+    3. 使用 GitHub 或 Microsoft 帳戶登入
+    
+    之後設定、擴充套件、快捷鍵等資料將自動同步至雲端，換電腦或重裝後可一鍵還原。
+  </Accordion>
+  <Accordion title="安裝時是否需要管理員權限？">
+    Windows 用戶建議以管理員身份執行安裝程式，以確保正確寫入 PATH 環境變數。macOS 用戶只需將 app 拖入應用程式資料夾即可，無需特殊權限。
+  </Accordion>
+</AccordionGroup>
+
+---
+
+<Tip>
+  建議安裝完成後立即啟用**設定同步**（Settings Sync），將來即使重裝系統，所有個人設定都能輕鬆還原，省去大量重新配置的時間。
+</Tip>
