@@ -1,0 +1,170 @@
+---
+title: "批量操作"
+description: "龍蝦搬運工的核心功能：批量移動、複製、刪除與重新命名"
+---
+
+## 概述
+
+`LobsterPorter` 類別提供四種基礎批量操作，全部支援：
+
+- **dry\_run 模式**：模擬執行，不真正修改任何檔案
+- **操作記錄**：每次操作自動寫入歷史日誌
+- **鉤子（Hook）機制**：操作完成後自動觸發自定義回調
+
+---
+
+## 初始化
+
+```python
+from lobster_porter import LobsterPorter
+
+# 正常模式
+porter = LobsterPorter()
+
+# 模擬模式（不實際執行，只記錄日誌）
+porter = LobsterPorter(dry_run=True)
+```
+
+---
+
+## 批量移動（batch\_move）
+
+將一組檔案移動到指定目標資料夾。若目標資料夾不存在，會自動建立。
+
+```python
+moved = porter.batch_move(
+    sources=["scene_01.pdf", "scene_02.pdf", "scene_03.pdf"],
+    destination="劇本/第一幕/",
+    overwrite=False,  # 預設：不覆蓋同名檔案
+)
+print(f"已移動 {len(moved)} 個檔案")
+```
+
+### 參數
+
+| 參數 | 類型 | 說明 |
+|------|------|------|
+| `sources` | `List[str]` | 來源檔案路徑列表 |
+| `destination` | `str` | 目標資料夾路徑 |
+| `overwrite` | `bool` | 是否覆蓋已存在的同名檔案（預設 `False`） |
+
+### 回傳值
+
+成功移動的目標路徑列表。
+
+---
+
+## 批量複製（batch\_copy）
+
+複製一組檔案到目標資料夾，來源檔案保持不變。
+
+```python
+copied = porter.batch_copy(
+    sources=["vfx_shot_001.exr", "vfx_shot_002.exr"],
+    destination="特效/備份/",
+    overwrite=True,
+)
+print(f"已複製 {len(copied)} 個檔案")
+```
+
+---
+
+## 批量刪除（batch\_delete）
+
+刪除指定檔案列表。每個檔案刪除前會自動建立 `.bak` 備份，供撤銷操作使用。
+
+```python
+deleted = porter.batch_delete(
+    targets=["temp_render_001.tmp", "temp_render_002.tmp"]
+)
+print(f"已刪除 {len(deleted)} 個檔案")
+```
+
+<Warning>
+批量刪除操作**會建立 `.bak` 備份**以支援撤銷。若空間有限，請在確認無誤後手動清除備份檔案。
+</Warning>
+
+---
+
+## 批量重新命名（batch\_rename）
+
+根據自訂規則函式批量重新命名檔案。
+
+```python
+# 範例：在所有檔名加上日期前綴
+import datetime
+
+def add_date_prefix(filename: str) -> str:
+    date_str = datetime.date.today().strftime("%Y%m%d")
+    return f"{date_str}_{filename}"
+
+renamed = porter.batch_rename(
+    targets=["scene_01.pdf", "scene_02.pdf"],
+    rename_fn=add_date_prefix,
+)
+# 結果: ["20240416_scene_01.pdf", "20240416_scene_02.pdf"]
+```
+
+---
+
+## 撤銷操作（undo）
+
+```python
+# 撤銷最近 1 步
+undone = porter.undo()
+
+# 撤銷最近 5 步
+undone = porter.undo(steps=5)
+
+print(f"已撤銷 {len(undone)} 步操作")
+for record in undone:
+    print(record)
+```
+
+詳見 [操作歷史與撤銷](/lobster-porter/history-undo) 完整說明。
+
+---
+
+## CLI 使用
+
+```bash
+# 移動所有 PDF 到指定資料夾
+lobster-porter move *.pdf --dest 劇本/
+
+# 複製並覆蓋同名檔案
+lobster-porter copy assets/*.psd --dest 美術/備份/ --overwrite
+
+# 刪除暫存檔案
+lobster-porter delete tmp/*.tmp
+
+# 撤銷最近 2 步
+lobster-porter undo --steps 2
+
+# 查看操作歷史
+lobster-porter history
+```
+
+---
+
+## Hook 鉤子機制
+
+在任何操作完成後執行自定義邏輯：
+
+```python
+def notify_team(event: str, **kwargs):
+    if event == "after_move":
+        print(f"📢 通知：已搬運 {kwargs['src']} → {kwargs['dst']}")
+
+porter.register_hook(notify_team)
+porter.batch_move(["scene_01.pdf"], destination="劇本/")
+# 輸出：📢 通知：已搬運 scene_01.pdf → 劇本/scene_01.pdf
+```
+
+支援的事件類型：
+
+| 事件 | 觸發時機 |
+|------|----------|
+| `after_move` | 每個檔案移動完成後 |
+| `after_copy` | 每個檔案複製完成後 |
+| `after_delete` | 每個檔案刪除完成後 |
+| `after_rename` | 每個檔案重命名完成後 |

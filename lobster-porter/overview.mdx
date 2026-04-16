@@ -1,0 +1,117 @@
+---
+title: "龍蝦搬運工總覽"
+description: "lobster_porter — 為大型電影製作與知識管理設計的批量檔案搬運工具"
+---
+
+## 什麼是龍蝦搬運工？
+
+**龍蝦搬運工（lobster\_porter）** 是一套專為大型協作專案設計的 Python 批量檔案搬運與分類工具。無論是電影製作的資產管理、AI Prompt 素材整理，還是知識庫的資料流轉，龍蝦搬運工都能以可擴展的插件式架構，自動、安全、可撤銷地完成大量重複性操作。
+
+<Info>
+**目前版本**：0.9.0（1.0 版本開發中）  
+**適用場景**：電影製作資產管理、腳本分鏡整理、AI 提示詞素材庫管理、跨部門大批檔案交付
+</Info>
+
+---
+
+## 核心功能一覽
+
+<Columns cols={2}>
+  <Card title="批量移動 & 複製" icon="arrows-up-down-left-right" href="/lobster-porter/batch-operations">
+    一次操作搬運數百至數千個素材檔案，支援 glob 模式與自動建立目標資料夾。
+  </Card>
+  <Card title="智能分類策略" icon="sitemap" href="/lobster-porter/classification">
+    根據副檔名、關鍵字或正則表達式自動路由檔案，零人手設定分類規則。
+  </Card>
+  <Card title="插件擴展系統" icon="puzzle-piece" href="/lobster-porter/plugins">
+    以標準介面開發自定義插件，實現格式轉換、雲端同步、通知發送等高階功能。
+  </Card>
+  <Card title="操作歷史 & 撤銷" icon="clock-rotate-left" href="/lobster-porter/history-undo">
+    每次操作均記錄日誌，支援多步驟回滾，杜絕大批誤操作造成的資料損失。
+  </Card>
+</Columns>
+
+---
+
+## 快速開始
+
+### 安裝
+
+```bash
+# 從本倉庫根目錄安裝（開發模式）
+pip install -e .
+```
+
+### 三行程式碼上手
+
+```python
+from lobster_porter import LobsterPorter
+
+porter = LobsterPorter()
+porter.batch_move(["scene_01.pdf", "scene_02.pdf"], destination="劇本/")
+```
+
+### CLI 快速示範
+
+```bash
+# 批量移動所有 PDF 到「劇本」資料夾
+lobster-porter move *.pdf --dest 劇本/
+
+# 試跑（不實際執行）
+lobster-porter move *.psd --dest 美術/ --dry-run
+
+# 撤銷最近 3 步
+lobster-porter undo --steps 3
+```
+
+---
+
+## 為什麼電影製作需要龍蝦搬運工？
+
+大型電影專案每天產出數百個資產檔案——腳本草稿、分鏡圖、美術稿、音效素材、VFX 輸出、AI 渲染 Prompt……若全靠人手搬運、重命名、分類，不僅耗時且極易出錯。
+
+龍蝦搬運工的設計目標正是解決這個痛點：
+
+| 問題 | 龍蝦搬運工的解決方案 |
+|------|---------------------|
+| 重複手動搬檔案 | 批量操作 + CLI 一鍵執行 |
+| 分類規則多變 | 可組合策略鏈，隨時調整 |
+| 誤操作難以復原 | 全程記錄 + 多步驟撤銷 |
+| 不同部門格式各異 | 格式分類插件自動路由 |
+| 新需求需重寫程式 | 插件系統擴展，不破壞核心 |
+
+---
+
+## 模組架構
+
+```
+lobster_porter/
+├── __init__.py          # 套件入口，導出主要類別
+├── core.py              # 核心批量操作（move / copy / delete / rename）
+├── strategies.py        # 分類策略（FormatStrategy / KeywordStrategy / RegexStrategy）
+├── history.py           # 操作歷史記錄與撤銷機制
+├── cli.py               # 命令行介面
+└── plugins/
+    ├── __init__.py
+    ├── base.py          # 插件抽象基類
+    └── format_classifier.py  # 預設格式分類插件
+```
+
+---
+
+## 繼續閱讀
+
+<CardGroup cols={2}>
+  <Card title="批量操作詳解" icon="layer-group" href="/lobster-porter/batch-operations">
+    移動、複製、刪除、重命名的完整 API 參考
+  </Card>
+  <Card title="分類策略設定" icon="filter" href="/lobster-porter/classification">
+    如何組合多種策略達到精準分類
+  </Card>
+  <Card title="任務進度說明" icon="list-check" href="/lobster-porter/task-progress">
+    目前所有已執行及排隊中的 Copilot 任務詳細說明
+  </Card>
+  <Card title="1.0 版本路線圖" icon="map" href="/lobster-porter/roadmap">
+    距離完整 1.0 版本還差哪些模組
+  </Card>
+</CardGroup>

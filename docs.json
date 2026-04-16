@@ -48,6 +48,34 @@
         ]
       },
       {
+        "tab": "龍蝦搬運工",
+        "groups": [
+          {
+            "group": "入門",
+            "pages": [
+              "lobster-porter/overview"
+            ]
+          },
+          {
+            "group": "核心功能",
+            "pages": [
+              "lobster-porter/batch-operations",
+              "lobster-porter/classification",
+              "lobster-porter/history-undo",
+              "lobster-porter/plugins"
+            ]
+          },
+          {
+            "group": "應用與規劃",
+            "pages": [
+              "lobster-porter/film-production",
+              "lobster-porter/task-progress",
+              "lobster-porter/roadmap"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "API reference",
         "groups": [
           {

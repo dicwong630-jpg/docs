@@ -1,0 +1,139 @@
+---
+title: "操作歷史與撤銷"
+description: "龍蝦搬運工的安全保障：全程記錄操作日誌，支援多步驟回滾"
+---
+
+## 為什麼需要操作歷史？
+
+在大型電影製作專案中，一次批量操作可能涉及數百個關鍵檔案。一旦搬錯目標、誤刪素材，如果沒有操作記錄和撤銷機制，後果將相當嚴重。
+
+龍蝦搬運工的 **`OperationHistory`** 模組確保：
+
+- 每一步操作均自動記錄（無需手動呼叫）
+- 支援多步驟回滾（undo）
+- 刪除操作自動建立備份（`.bak`）供還原使用
+- 日誌可匯出供審計或問題追查
+
+---
+
+## OperationRecord — 操作記錄
+
+每條記錄包含以下欄位：
+
+| 欄位 | 類型 | 說明 |
+|------|------|------|
+| `action` | `str` | 操作類型：`move` / `copy` / `delete` / `rename` |
+| `source` | `str` | 來源路徑 |
+| `destination` | `str \| None` | 目標路徑（刪除操作為 `None`） |
+| `dry_run` | `bool` | 是否為模擬操作 |
+| `timestamp` | `datetime` | 操作時間戳記 |
+
+```python
+from lobster_porter.history import OperationRecord
+from datetime import datetime
+
+record = OperationRecord(
+    action="move",
+    source="scene_01.pdf",
+    destination="劇本/場景一/scene_01.pdf",
+)
+print(record)
+# [2024-04-16 14:30:22] move: scene_01.pdf → 劇本/場景一/scene_01.pdf
+```
+
+---
+
+## OperationHistory — 歷史管理器
+
+```python
+from lobster_porter.history import OperationHistory, OperationRecord
+
+history = OperationHistory(max_records=1000)
+
+# 新增記錄
+history.record(OperationRecord(
+    action="copy",
+    source="sfx_001.wav",
+    destination="音效/備份/sfx_001.wav",
+))
+
+# 查看所有記錄
+for record in history.all_records():
+    print(record)
+
+# 查看記錄總數
+print(len(history))  # → 1
+
+# 清空歷史
+history.clear()
+```
+
+---
+
+## 撤銷操作
+
+### 通過 LobsterPorter 撤銷（推薦）
+
+```python
+from lobster_porter import LobsterPorter
+
+porter = LobsterPorter()
+
+# 執行操作
+porter.batch_move(["a.pdf", "b.pdf"], destination="劇本/")
+porter.batch_copy(["c.psd"], destination="美術/")
+
+# 撤銷最近 1 步（撤銷複製）
+undone = porter.undo(steps=1)
+
+# 撤銷最近 2 步（撤銷移動 + 複製）
+undone = porter.undo(steps=2)
+print(f"已撤銷 {len(undone)} 步操作")
+```
+
+### 撤銷邏輯說明
+
+| 操作類型 | 撤銷行為 |
+|----------|----------|
+| `move` | 將目標位置的檔案移回原始位置 |
+| `copy` | 刪除複製到目標位置的副本 |
+| `delete` | 從 `.bak` 備份還原到原始位置 |
+| `rename` | 將重命名後的檔案改回原始檔名 |
+
+---
+
+## CLI 操作歷史
+
+```bash
+# 查看操作歷史
+lobster-porter history
+
+# 輸出範例：
+# [2024-04-16 14:30:22] move: scene_01.pdf → 劇本/scene_01.pdf
+# [2024-04-16 14:30:23] move: scene_02.pdf → 劇本/scene_02.pdf
+# [2024-04-16 14:31:05] copy: sfx.wav → 音效/備份/sfx.wav
+
+# 撤銷最近 3 步
+lobster-porter undo --steps 3
+
+# 模擬撤銷（不實際執行）
+lobster-porter undo --steps 2 --dry-run
+```
+
+---
+
+## 最佳實踐
+
+<Tip>
+**執行大批量操作前**，建議先以 `--dry-run` 模擬，確認操作清單無誤後再正式執行：
+
+```bash
+lobster-porter move "資產/**/*.pdf" --dest 劇本/ --dry-run
+# 確認輸出無誤後移除 --dry-run 正式執行
+lobster-porter move "資產/**/*.pdf" --dest 劇本/
+```
+</Tip>
+
+<Warning>
+**刪除備份（`.bak`）前請三思。** 在確認所有操作都正確之前，不要手動清除 `.bak` 備份檔案，否則刪除操作將無法撤銷。
+</Warning>

@@ -1,0 +1,161 @@
+---
+title: "分類策略"
+description: "使用可組合的分類策略自動路由檔案到對應目標資料夾"
+---
+
+## 概述
+
+龍蝦搬運工的分類策略（`ClassificationStrategy`）讓你無需手動判斷每個檔案的歸屬——只需定義規則，系統自動判斷分類並路由。
+
+支援三種內建策略，並可通過「策略鏈」組合使用：
+
+| 策略類別 | 分類依據 | 適用場景 |
+|----------|----------|----------|
+| `FormatStrategy` | 副檔名 | 資產類型分類（劇本、美術、音效…） |
+| `KeywordStrategy` | 檔名關鍵字 | 依場景、角色、版本分類 |
+| `RegexStrategy` | 正則表達式 | 複雜命名規則匹配 |
+| `StrategyChain` | 組合多策略 | 多條件依優先順序判斷 |
+
+---
+
+## 格式策略（FormatStrategy）
+
+根據副檔名自動分類，內建電影製作常用規則：
+
+```python
+from lobster_porter.strategies import FormatStrategy
+
+strategy = FormatStrategy()
+
+print(strategy.classify("scene_01.pdf"))      # → "劇本"
+print(strategy.classify("character_art.psd")) # → "美術"
+print(strategy.classify("ambient_sfx.wav"))   # → "音效"
+print(strategy.classify("final_cut.mp4"))     # → "影片"
+print(strategy.classify("unknown.xyz"))       # → None
+```
+
+### 預設分類規則
+
+| 分類 | 支援副檔名 |
+|------|-----------|
+| 劇本 | `.fountain` `.fdx` `.pdf` `.docx` `.txt` |
+| 美術 | `.psd` `.ai` `.png` `.jpg` `.jpeg` `.tiff` `.svg` |
+| 音效 | `.wav` `.mp3` `.aiff` `.flac` `.ogg` |
+| 影片 | `.mp4` `.mov` `.avi` `.mkv` `.prproj` |
+| 資料 | `.json` `.csv` `.xlsx` `.yaml` `.xml` |
+| 提示詞 | `.prompt` `.md` |
+
+### 自訂規則
+
+```python
+custom_strategy = FormatStrategy(rules={
+    "渲染圖": [".exr", ".hdr", ".tga"],
+    "3D模型": [".fbx", ".obj", ".blend"],
+    "字幕": [".srt", ".ass", ".vtt"],
+})
+```
+
+---
+
+## 關鍵字策略（KeywordStrategy）
+
+根據檔名中的關鍵字匹配：
+
+```python
+from lobster_porter.strategies import KeywordStrategy
+
+strategy = KeywordStrategy(rules={
+    "分鏡": ["storyboard", "分鏡", "sb_"],
+    "特效": ["vfx", "特效", "fx_"],
+    "第一幕": ["act1", "act_1", "第一幕"],
+})
+
+print(strategy.classify("scene_03_storyboard_v2.png"))  # → "分鏡"
+print(strategy.classify("fx_explosion_001.mp4"))        # → "特效"
+print(strategy.classify("act1_intro.pdf"))              # → "第一幕"
+```
+
+---
+
+## 正則表達式策略（RegexStrategy）
+
+適合處理有固定命名規範的大型專案：
+
+```python
+from lobster_porter.strategies import RegexStrategy
+
+strategy = RegexStrategy(rules={
+    "場景檔": r"^scene_\d{2,}",
+    "版本檔": r"_v\d+\.",
+    "備份檔": r"\.(bak|backup)$",
+})
+
+print(strategy.classify("scene_12_final.pdf"))   # → "場景檔"
+print(strategy.classify("character_v3.psd"))     # → "版本檔"
+```
+
+---
+
+## 策略鏈（StrategyChain）
+
+組合多個策略，依序嘗試直到匹配成功：
+
+```python
+from lobster_porter.strategies import (
+    FormatStrategy, KeywordStrategy, StrategyChain
+)
+
+keyword_strategy = KeywordStrategy(rules={
+    "VFX鏡頭": ["vfx_", "特效_"],
+})
+format_strategy = FormatStrategy()
+
+# 先嘗試關鍵字，再嘗試格式
+chain = StrategyChain([keyword_strategy, format_strategy])
+
+print(chain.classify("vfx_explosion.mp4"))   # → "VFX鏡頭"（關鍵字命中）
+print(chain.classify("character.psd"))       # → "美術"（格式命中）
+print(chain.classify("notes.unknown"))       # → None（無策略命中）
+```
+
+---
+
+## 結合搬運工自動分類搬運
+
+```python
+from lobster_porter import LobsterPorter
+from lobster_porter.strategies import FormatStrategy
+
+porter = LobsterPorter()
+strategy = FormatStrategy()
+
+files = [
+    "act1_scene01.pdf",
+    "hero_costume_design.psd",
+    "theme_music_draft.wav",
+    "final_trailer.mp4",
+]
+
+# 按分類批量移動到各自的子資料夾
+from collections import defaultdict
+
+groups = defaultdict(list)
+for f in files:
+    category = strategy.classify(f) or "其他"
+    groups[category].append(f)
+
+for category, file_list in groups.items():
+    porter.batch_move(file_list, destination=f"資產/{category}/")
+```
+
+---
+
+## 設計建議
+
+<Tip>
+對於電影製作專案，建議使用以下策略鏈優先順序：
+
+1. **關鍵字策略**：優先處理有特定前綴/後綴（如 `vfx_`、`sb_`）的檔案
+2. **格式策略**：作為後備，根據副檔名分類剩餘檔案
+3. **預設分類**：無法匹配時歸入「其他」資料夾
+</Tip>

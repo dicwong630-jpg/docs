@@ -1,0 +1,195 @@
+---
+title: "插件系統"
+description: "通過標準插件介面擴展龍蝦搬運工的功能，無需修改核心程式碼"
+---
+
+## 設計理念
+
+龍蝦搬運工的插件系統採用「**核心穩定，邊界擴展**」的設計原則：
+
+- 核心模組（`core.py`）只負責基礎搬運操作，不含任何業務邏輯
+- 所有可選功能（格式轉換、雲端同步、通知、自動標籤…）均以插件形式實現
+- 插件之間相互獨立，可自由組合
+
+---
+
+## 插件介面（BasePlugin）
+
+所有插件繼承自 `BasePlugin` 抽象基類：
+
+```python
+from lobster_porter.plugins.base import BasePlugin
+from typing import List, Optional
+
+class MyPlugin(BasePlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+    description = "我的自訂插件"
+
+    def pre_process(self, files: List[str]) -> List[str]:
+        """搬運前執行：可過濾、轉換或重新排列檔案列表"""
+        return files
+
+    def post_process(self, files: List[str], destination: str) -> None:
+        """搬運後執行：可發送通知、生成報告、觸發同步"""
+        print(f"✅ 完成搬運 {len(files)} 個檔案到 {destination}")
+
+    def on_error(self, file: str, error: Exception) -> Optional[str]:
+        """錯誤處理：返回替代路徑或 None（跳過該檔案）"""
+        print(f"⚠️ 處理 {file} 時發生錯誤：{error}")
+        return None
+```
+
+### 方法說明
+
+| 方法 | 觸發時機 | 回傳值 |
+|------|----------|--------|
+| `pre_process(files)` | 搬運操作開始前 | 處理後的檔案列表 |
+| `post_process(files, destination)` | 搬運操作完成後 | 無（副作用） |
+| `on_error(file, error)` | 單個檔案操作失敗時 | 替代路徑或 `None` |
+
+---
+
+## 內建插件：格式分類插件（FormatClassifierPlugin）
+
+根據副檔名自動分類，輸出分類摘要報告：
+
+```python
+from lobster_porter.plugins import FormatClassifierPlugin
+
+plugin = FormatClassifierPlugin()
+
+# 查詢單個檔案的分類
+print(plugin.classify_file("scene_01.pdf"))      # → "劇本"
+print(plugin.classify_file("hero_design.psd"))   # → "美術"
+
+# 自訂映射規則
+custom_plugin = FormatClassifierPlugin(mapping={
+    ".exr": "渲染圖",
+    ".fbx": "3D模型",
+    ".srt": "字幕檔",
+})
+```
+
+執行 `post_process` 後會輸出類似以下的摘要：
+
+```
+📦 格式分類摘要（目標：資產/）
+----------------------------------------
+  劇本: 12 個檔案
+  美術: 45 個檔案
+  音效: 8 個檔案
+  影片: 3 個檔案
+----------------------------------------
+```
+
+---
+
+## 開發自訂插件範例
+
+### 雲端同步插件
+
+```python
+class CloudSyncPlugin(BasePlugin):
+    name = "cloud_sync"
+    version = "0.1.0"
+    description = "搬運完成後自動同步到雲端儲存"
+
+    def __init__(self, bucket: str, access_key: str):
+        self.bucket = bucket
+        self.access_key = access_key
+
+    def post_process(self, files: List[str], destination: str) -> None:
+        for file in files:
+            # 上傳到雲端（示意）
+            print(f"☁️  上傳 {file} 到 s3://{self.bucket}/{destination}")
+```
+
+### Slack 通知插件
+
+```python
+import requests
+
+class SlackNotifyPlugin(BasePlugin):
+    name = "slack_notify"
+    version = "0.1.0"
+    description = "搬運完成後發送 Slack 通知"
+
+    def __init__(self, webhook_url: str):
+        self.webhook_url = webhook_url
+
+    def post_process(self, files: List[str], destination: str) -> None:
+        message = f"🦞 龍蝦搬運工：已完成 {len(files)} 個檔案搬運到 `{destination}`"
+        requests.post(self.webhook_url, json={"text": message})
+```
+
+### 重複檔案過濾插件
+
+```python
+import hashlib
+from pathlib import Path
+
+class DedupPlugin(BasePlugin):
+    name = "dedup"
+    version = "0.1.0"
+    description = "過濾重複檔案，只保留唯一內容"
+
+    def pre_process(self, files: List[str]) -> List[str]:
+        seen_hashes = set()
+        unique_files = []
+        for f in files:
+            file_hash = self._hash_file(f)
+            if file_hash not in seen_hashes:
+                seen_hashes.add(file_hash)
+                unique_files.append(f)
+        return unique_files
+
+    @staticmethod
+    def _hash_file(path: str) -> str:
+        h = hashlib.md5()
+        with open(path, "rb") as f:
+            h.update(f.read())
+        return h.hexdigest()
+```
+
+---
+
+## 插件組合使用
+
+多個插件可一起搭配搬運工使用（通過 Hook 機制串聯）：
+
+```python
+from lobster_porter import LobsterPorter
+from lobster_porter.plugins import FormatClassifierPlugin
+
+porter = LobsterPorter()
+classifier = FormatClassifierPlugin()
+
+# 搬運前過濾
+files = classifier.pre_process(["scene.pdf", "art.psd", "sfx.wav"])
+
+# 執行批量移動
+moved = porter.batch_move(files, destination="資產/")
+
+# 搬運後輸出摘要
+classifier.post_process(moved, destination="資產/")
+```
+
+---
+
+## 計劃中的插件（1.0 路線圖）
+
+<CardGroup cols={2}>
+  <Card title="索引生成插件" icon="magnifying-glass">
+    自動為資料夾內所有搬運結果建立索引 JSON / Markdown 目錄
+  </Card>
+  <Card title="雲端同步插件" icon="cloud">
+    支援 S3、Google Drive、OneDrive 的雙向同步
+  </Card>
+  <Card title="格式轉換插件" icon="arrows-rotate">
+    搬運時自動轉換格式（如 .docx → .pdf）
+  </Card>
+  <Card title="報告生成插件" icon="chart-bar">
+    搬運完成後生成 HTML/PDF 操作報告
+  </Card>
+</CardGroup>

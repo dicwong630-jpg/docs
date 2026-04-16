@@ -1,0 +1,157 @@
+---
+title: "電影製作應用"
+description: "龍蝦搬運工在大型電影製作資料流管理中的關鍵作用與實戰應用"
+---
+
+## 電影製作的資料管理痛點
+
+大型電影製作專案每天產出龐大的數位資產：
+
+- 🎬 **劇本與分鏡**：多版本草稿、場景分鏡圖、導演備注
+- 🎨 **美術設計**：角色造型、場景美術、服裝設計、道具圖紙
+- 🎵 **音效與配樂**：現場錄音、音效素材、配樂草稿
+- 🎞️ **影片素材**：鏡頭原始檔案、VFX 素材、動畫輸出
+- 🤖 **AI 提示詞**：Stable Diffusion Prompt、ControlNet 設定、AI 角色渲染指令
+
+若這一切全靠人手搬運、重命名、分類，不僅耗費大量時間，更極易造成版本混亂、檔案丟失等嚴重問題。
+
+---
+
+## 龍蝦搬運工如何解決這些問題
+
+### 問題 ↔ 解決方案對照
+
+| 常見問題 | 龍蝦搬運工解決方案 |
+|---------|-------------------|
+| 每天手動搬運數百個檔案 | `batch_move` 一行程式碼完成 |
+| 格式各異難以統一管理 | `FormatStrategy` 按副檔名自動路由 |
+| 場景命名不一致 | `KeywordStrategy` 按關鍵字分類 |
+| 誤刪重要素材 | `OperationHistory` + `undo` 即時還原 |
+| 跨部門交付缺乏記錄 | 全程操作日誌，隨時查核 |
+| 新需求需重寫自動化腳本 | 插件系統，開發新插件不破壞核心 |
+
+---
+
+## 實戰工作流程範例
+
+### 每日資產整理工作流
+
+```python
+from lobster_porter import LobsterPorter
+from lobster_porter.strategies import FormatStrategy, KeywordStrategy, StrategyChain
+from lobster_porter.plugins import FormatClassifierPlugin
+from collections import defaultdict
+
+porter = LobsterPorter()
+plugin = FormatClassifierPlugin()
+
+# 當日新增資產（從交付資料夾收集）
+new_assets = [
+    "scene_12_sb_v3.png",         # 分鏡圖
+    "hero_costume_final.psd",     # 美術設計
+    "act2_script_v7.pdf",         # 劇本
+    "explosion_sfx_master.wav",   # 音效
+    "vfx_shot_042_output.mp4",    # VFX 影片
+    "stable_diffusion_hero.prompt" # AI 提示詞
+]
+
+# 策略鏈：先按關鍵字，再按格式
+keyword_strategy = KeywordStrategy(rules={
+    "分鏡": ["sb_", "storyboard"],
+    "VFX": ["vfx_", "特效"],
+})
+format_strategy = FormatStrategy()
+chain = StrategyChain([keyword_strategy, format_strategy])
+
+# 按分類分組
+groups = defaultdict(list)
+for asset in new_assets:
+    category = chain.classify(asset) or "未分類"
+    groups[category].append(asset)
+
+# 批量搬運到各分類資料夾
+base = "製作資產/2024-04-16/"
+for category, files in groups.items():
+    porter.batch_move(files, destination=f"{base}{category}/")
+    plugin.post_process(files, destination=f"{base}{category}/")
+```
+
+### 輸出示例
+
+```
+📦 格式分類摘要（目標：製作資產/2024-04-16/分鏡/）
+----------------------------------------
+  分鏡: 1 個檔案
+----------------------------------------
+📦 格式分類摘要（目標：製作資產/2024-04-16/美術/）
+----------------------------------------
+  美術: 1 個檔案
+----------------------------------------
+```
+
+---
+
+## 為什麼龍蝦搬運工對電影製作不可或缺
+
+<AccordionGroup>
+  <Accordion title="快速批量搬運節省製作時間">
+    電影製作後期一個項目可能有數萬個資產檔案。靠人手逐個搬運平均每天需要 2-4 小時。龍蝦搬運工將此縮短至幾秒鐘，讓團隊專注於創作而非行政管理。
+  </Accordion>
+  <Accordion title="可撤銷操作保障資產安全">
+    分場景批量移動後發現搬錯了？一個 `undo` 命令即可還原。對比傳統手動操作「發現搬錯了無法還原」的惡夢，龍蝦搬運工提供完整的安全網。
+  </Accordion>
+  <Accordion title="插件系統支援未來擴展">
+    電影製作的工作流程因片而異。龍蝦搬運工的插件系統讓你在不修改核心程式碼的前提下，隨時增加新功能：雲端同步、自動格式轉換、導演審批通知……
+  </Accordion>
+  <Accordion title="操作日誌支援跨部門協作審計">
+    製片人可隨時查閱「哪些素材在什麼時間被哪個流程搬移到哪裡」，讓版本管理和責任追溯變得清晰。
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 龍蝦搬運工需要一個可靠的「大腦」
+
+龍蝦搬運工是強大的搬運執行層，但在複雜的製作環境中，還需要一個**任務調度大腦**來協調整個工作流：
+
+```
+┌─────────────────────────────────────────────┐
+│              工作流調度大腦                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ 任務池    │  │ 策略路由  │  │ 錯誤恢復  │  │
+│  └──────────┘  └──────────┘  └──────────┘  │
+└─────────────────────────────────────────────┘
+                      │
+                      ▼
+┌─────────────────────────────────────────────┐
+│            龍蝦搬運工執行層                    │
+│  batch_move  batch_copy  batch_delete  undo  │
+└─────────────────────────────────────────────┘
+```
+
+「大腦」負責：
+- **任務調度**：決定先執行哪個搬運任務、完成後觸發什麼下一步
+- **依賴管理**：「完成分類後，才執行搬運；搬運完成後，才觸發雲端同步」
+- **錯誤恢復**：某個任務失敗時自動重試或回滾
+- **插件策略自動選擇**：根據任務類型自動挑選合適插件
+
+這個「大腦」模組（Workflow Orchestrator）列入 [1.0 版本路線圖](/lobster-porter/roadmap)。
+
+---
+
+## 相關資源
+
+<CardGroup cols={2}>
+  <Card title="批量操作 API" icon="code" href="/lobster-porter/batch-operations">
+    完整的批量搬運 API 參考
+  </Card>
+  <Card title="分類策略設定" icon="filter" href="/lobster-porter/classification">
+    如何根據電影製作場景配置分類規則
+  </Card>
+  <Card title="插件開發指南" icon="puzzle-piece" href="/lobster-porter/plugins">
+    開發自訂插件擴展搬運功能
+  </Card>
+  <Card title="1.0 版本路線圖" icon="map" href="/lobster-porter/roadmap">
+    查看距離完整 1.0 版本還差哪些功能
+  </Card>
+</CardGroup>
