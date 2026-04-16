@@ -1,0 +1,97 @@
+---
+title: "AI 視頻產線總覽"
+description: "dicwong630-jpg/docs（main 分支）劇本中心 AI 協作產線 — 現狀盤點與架構說明"
+icon: "film"
+---
+
+## 產線架構概覽
+
+以 **lobster_porter** 為調度核心，全流程以「劇本」作為唯一邏輯介面（演算大腦），串連 AI 自動編劇、素材分流、語音生成、圖像生成、影片合成，直至自動發布。
+
+```
+劇本（script.yaml）
+      │
+      ├─► AI 自動編劇（符合六大準則）
+      │
+      ├─► 素材分流（lobster_porter 批量歸檔）
+      │
+      ├─► TTS 語音生成
+      │
+      ├─► AI 圖片生成（分鏡美術）
+      │
+      ├─► 影片自動合成（音畫合併→ mp4）
+      │
+      └─► 自動發布（YouTube API / 雲端平台）
+```
+
+---
+
+## 目前已補齊的能力
+
+<AccordionGroup>
+
+<Accordion title="劇本規範與邏輯大腦設計" icon="brain" defaultOpen>
+
+- 以 **YAML / JSON / Markdown** 結構承載場景、分鏡、角色對話、時序關係
+- 劇本作為全流程調度依據（而非時長切割），支援每集最長約 5 分鐘內的段落完整性
+- `config/rules.yaml` 存放六大準則，供 AI 生成時自動校驗
+- 完整目錄結構（劇本、素材、音訊、圖像、片段、成品各自獨立資料夾）
+
+</Accordion>
+
+<Accordion title="素材搬運與分類（lobster_porter 核心）" icon="boxes-stacked">
+
+- 批量搬運腳本：依命名規則自動分類至各集資料夾
+- 策略插件機制：可插拔不同整理規則，支援後續擴充
+- 版本控管友好：所有素材變更均可透過 Git 追蹤
+
+</Accordion>
+
+<Accordion title="流程文件化與產線設計" icon="diagram-project">
+
+- 主 pipeline 骨架（`main_pipeline.py`）已定義各步驟介面
+- 各模組（`generate_script`、`dispatch_materials`、`auto_move_tag`、`ai_media_gen`、`media_assembler`、`publish_auto`）有明確分工
+- GitHub Actions 可銜接自動化觸發機制
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+## 目前資料夾結構參考
+
+```
+/lobster_porter_ai_pipeline/
+  /scripts/
+    generate_script.py        # 調用 LLM 生成劇本
+    dispatch_materials.py     # 依劇本自動生成素材清單
+    auto_move_tag.py          # 搬運＋標註素材
+    ai_media_gen.py           # 調用 TTS / 圖像 API
+    media_assembler.py        # 分段自動合成影片
+    publish_auto.py           # 一鍵發布
+  /data/
+    script.yaml               # 劇本主腦
+    /materials/               # 素材來源集中
+    /audio/                   # TTS 生成音檔
+    /image/                   # AI 生成美術圖
+    /segments/                # 中間合成片段
+    /output/                  # 成品影片
+  /config/
+    rules.yaml                # 六大準則
+    api_keys.json             # 第三方 API 金鑰
+  README.md
+```
+
+---
+
+## 下一步
+
+<CardGroup cols={2}>
+  <Card title="缺口清單" icon="list-check" href="/pipeline/gaps-checklist">
+    細看哪幾個環節尚未完成、哪些已 ready
+  </Card>
+  <Card title="MVP 最短路徑" icon="rocket" href="/pipeline/mvp-path">
+    最快驗證全線自動化的實作建議與腳本
+  </Card>
+</CardGroup>

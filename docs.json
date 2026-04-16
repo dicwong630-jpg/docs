@@ -11,6 +11,19 @@
   "navigation": {
     "tabs": [
       {
+        "tab": "AI 視頻產線",
+        "groups": [
+          {
+            "group": "產線文件",
+            "pages": [
+              "pipeline/overview",
+              "pipeline/gaps-checklist",
+              "pipeline/mvp-path"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Guides",
         "groups": [
           {

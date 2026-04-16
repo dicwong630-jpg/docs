@@ -1,0 +1,352 @@
+---
+title: "MVP 最短路徑"
+description: "最小可行流程（Minimum Viable Pipeline）— 最快驗證全線自動化的實作方案"
+icon: "rocket"
+---
+
+## MVP 目標
+
+以最少的代碼補充，讓「**劇本 YAML → TTS 音檔 → AI 場景圖 → mp4 影片**」這條主線在 Google Colab 或本地環境跑通，產出 ko仔語言教學第 1 集的完整成品影片。
+
+<Note>
+自動發布（YouTube API）可暫緩至 MVP 驗證後再接入，先以手動上傳作過渡，降低初期複雜度。
+</Note>
+
+---
+
+## MVP 技術選型
+
+| 步驟 | 工具 | 理由 |
+|------|------|------|
+| AI 劇本生成 | OpenAI GPT-4o API | 中文品質最穩定，成本可控 |
+| TTS 語音 | `gTTS`（入門）→ Azure TTS（升級） | gTTS 免費無需金鑰，快速驗證 |
+| 圖片生成 | Replicate API（Stable Diffusion） | 無需本地 GPU，API 調用即可 |
+| 影片合成 | `moviepy` + `ffmpeg` | Python 原生，Colab 可直接安裝 |
+| 執行環境 | Google Colab | 零本地安裝，可直接掛載 GitHub repo |
+
+---
+
+## MVP 流程步驟
+
+<Steps>
+
+<Step title="Step 1：準備劇本 YAML（script.yaml）">
+
+建立第一集劇本，包含六大準則欄位、場景列表、對白、場景描述。
+
+```yaml
+# data/script.yaml — ko仔語言教學 EP01
+title: "ko仔語言教學 EP01：日常問候"
+episode: 1
+rules_version: "1.0"
+scenes:
+  - scene_id: "s01"
+    scene_description: "ko仔站在教室門口，陽光明媚"
+    dialogue: "大家好！我係ko仔，今日我哋學日常問候。"
+    duration_hint: 8
+  - scene_id: "s02"
+    scene_description: "ko仔指著黑板，板書寫有『早晨』二字"
+    dialogue: "第一句：早晨！呢個係廣東話打招呼嘅方法。"
+    duration_hint: 10
+  - scene_id: "s03"
+    scene_description: "ko仔微笑向鏡頭揮手"
+    dialogue: "好，今日就學到呢度，下次見！"
+    duration_hint: 6
+```
+
+</Step>
+
+<Step title="Step 2：TTS 語音生成（gTTS）">
+
+安裝並執行語音生成腳本，為每個場景的對白生成 mp3。
+
+```python
+# scripts/run_tts.py
+from gtts import gTTS
+import yaml, os
+
+# 注意：gTTS 對粵語的支援有限。
+#   lang="yue"  → 粵語（部分版本支援，建議優先嘗試）
+#   lang="zh-TW" → 普通話（台灣發音），如 "yue" 不可用時的後備選項
+# 如需高品質粵語語音，請改用 Azure TTS（zh-HK-HiuGaaiNeural），
+# 參見「MVP 後的升級路線」章節。
+CANTONESE_LANG = "yue"   # 若報錯請改為 "zh-TW"
+
+def generate_audio(script_path, audio_dir):
+    os.makedirs(audio_dir, exist_ok=True)
+    with open(script_path, "r", encoding="utf-8") as f:
+        script = yaml.safe_load(f)
+    for scene in script["scenes"]:
+        sid = scene["scene_id"]
+        text = scene["dialogue"]
+        tts = gTTS(text, lang=CANTONESE_LANG)
+        out_path = os.path.join(audio_dir, f"{sid}.mp3")
+        tts.save(out_path)
+        print(f"✅ 生成音檔：{out_path}")
+
+if __name__ == "__main__":
+    generate_audio("data/script.yaml", "data/audio")
+```
+
+```bash
+pip install gtts pyyaml
+python scripts/run_tts.py
+```
+
+</Step>
+
+<Step title="Step 3：AI 圖片生成（Replicate API）">
+
+為每個場景描述自動生成對應的畫面圖片。
+
+```python
+# scripts/run_image_gen.py
+import replicate, yaml, os, requests
+
+def generate_images(script_path, image_dir):
+    os.makedirs(image_dir, exist_ok=True)
+    with open(script_path, "r", encoding="utf-8") as f:
+        script = yaml.safe_load(f)
+    for scene in script["scenes"]:
+        sid = scene["scene_id"]
+        prompt = scene["scene_description"] + ", cartoon style, educational, bright colors"
+        output = replicate.run(
+            "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ed7461b95a03af9f11a7c58da",
+            input={"prompt": prompt, "width": 768, "height": 432}
+        )
+        img_url = output[0]
+        img_data = requests.get(img_url).content
+        out_path = os.path.join(image_dir, f"{sid}.png")
+        with open(out_path, "wb") as img_file:
+            img_file.write(img_data)
+        print(f"✅ 生成圖片：{out_path}")
+
+if __name__ == "__main__":
+    generate_images("data/script.yaml", "data/image")
+```
+
+```bash
+pip install replicate pyyaml requests
+# 需要設定環境變量 REPLICATE_API_TOKEN
+export REPLICATE_API_TOKEN="your_token_here"
+python scripts/run_image_gen.py
+```
+
+</Step>
+
+<Step title="Step 4：影片自動合成（moviepy）">
+
+按劇本順序，將圖片與音訊合成為各段影片，再串接為完整 mp4。
+
+```python
+# scripts/run_assembler.py
+from moviepy.editor import ImageClip, AudioFileClip, concatenate_videoclips, TextClip, CompositeVideoClip
+import yaml, os
+
+def assemble_video(script_path, audio_dir, image_dir, output_path):
+    with open(script_path, "r", encoding="utf-8") as f:
+        script = yaml.safe_load(f)
+
+    clips = []
+    for scene in script["scenes"]:
+        sid = scene["scene_id"]
+        audio_file = os.path.join(audio_dir, f"{sid}.mp3")
+        image_file = os.path.join(image_dir, f"{sid}.png")
+
+        audio = AudioFileClip(audio_file)
+        img = ImageClip(image_file).set_duration(audio.duration)
+        img = img.set_audio(audio)
+
+        # 加字幕
+        # 注意：顯示中文必須指定支援中文的字型。
+        #   Colab 環境請先執行：!apt-get install -y fonts-noto-cjk
+        #   並將 font 路徑設為 "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+        FONT_PATH = "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"
+        txt = TextClip(
+            scene["dialogue"],
+            fontsize=24, color="white",
+            bg_color="rgba(0,0,0,0.5)",
+            font=FONT_PATH,
+            size=(img.w, None), method="caption"
+        ).set_duration(audio.duration).set_position(("center", "bottom"))
+
+        composite = CompositeVideoClip([img, txt])
+        clips.append(composite)
+        print(f"✅ 合成片段：{sid}")
+
+    final = concatenate_videoclips(clips, method="compose")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    final.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac")
+    print(f"🎬 成品影片輸出：{output_path}")
+
+if __name__ == "__main__":
+    assemble_video(
+        "data/script.yaml",
+        "data/audio",
+        "data/image",
+        "data/output/ep01_final.mp4"
+    )
+```
+
+```bash
+pip install moviepy
+# 確保系統已安裝 ffmpeg（Colab 已內建）
+python scripts/run_assembler.py
+```
+
+</Step>
+
+<Step title="Step 5：一鍵執行主 pipeline">
+
+```python
+# main_pipeline.py
+import subprocess, sys
+
+steps = [
+    ("TTS 語音生成",   ["python", "scripts/run_tts.py"]),
+    ("AI 圖片生成",    ["python", "scripts/run_image_gen.py"]),
+    ("影片自動合成",    ["python", "scripts/run_assembler.py"]),
+]
+
+for name, cmd in steps:
+    print(f"\n{'='*40}\n▶ {name}\n{'='*40}")
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    print(result.stdout)
+    if result.returncode != 0:
+        print(f"❌ 步驟失敗：{name}")
+        print(result.stderr)
+        sys.exit(1)
+
+print("\n✅ MVP 全流程完成！成品影片位於 data/output/ep01_final.mp4")
+```
+
+```bash
+python main_pipeline.py
+```
+
+</Step>
+
+</Steps>
+
+---
+
+## Google Colab 快速啟動
+
+點擊下方按鈕可在 Colab 中直接執行（需將 repo clone 到 Colab）：
+
+```python
+# Colab 第一格：環境安裝
+!pip install gtts pyyaml replicate requests moviepy
+!apt-get install -y ffmpeg fonts-noto-cjk   # fonts-noto-cjk 提供中文字型，字幕需要
+
+# Colab 第二格：Clone repo（替換為你的 repo URL）
+!git clone https://github.com/dicwong630-jpg/docs.git
+%cd docs
+
+# Colab 第三格：設定 API 金鑰
+import os
+os.environ["REPLICATE_API_TOKEN"] = "your_token_here"  # 替換為你的 Token
+
+# Colab 第四格：執行主流程
+!python main_pipeline.py
+```
+
+---
+
+## MVP 後的升級路線
+
+<AccordionGroup>
+
+<Accordion title="TTS 升級：Azure Cognitive Services TTS" icon="microphone">
+
+Azure TTS 支援高品質廣東話（`zh-HK`），聲音更自然。
+
+```python
+import azure.cognitiveservices.speech as speechsdk
+
+speech_config = speechsdk.SpeechConfig(
+    subscription="YOUR_AZURE_KEY",
+    region="eastasia"
+)
+speech_config.speech_synthesis_voice_name = "zh-HK-HiuGaaiNeural"
+synthesizer = speechsdk.SpeechSynthesizer(speech_config=speech_config)
+result = synthesizer.speak_text_async("大家好！我係ko仔。").get()
+```
+
+</Accordion>
+
+<Accordion title="圖片一致性：使用固定角色 LoRA 模型" icon="image">
+
+為保持 ko仔角色外觀一致，建議：
+1. 在 Stable Diffusion 訓練一個專屬 LoRA 模型（需 20-50 張參考圖）
+2. 每次生成時固定使用該 LoRA 模型 + 相同 seed
+3. 或使用 **Midjourney Character Reference（`--cref`）** 功能保持角色一致性
+
+</Accordion>
+
+<Accordion title="自動發布：YouTube Data API v3" icon="youtube">
+
+```python
+# scripts/publish_youtube.py
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+from google.oauth2.credentials import Credentials
+
+def upload_to_youtube(video_path, title, description, tags):
+    creds = Credentials.from_authorized_user_file("config/youtube_token.json")
+    youtube = build("youtube", "v3", credentials=creds)
+    request = youtube.videos().insert(
+        part="snippet,status",
+        body={
+            "snippet": {"title": title, "description": description, "tags": tags},
+            "status": {"privacyStatus": "public"}
+        },
+        media_body=MediaFileUpload(video_path)
+    )
+    response = request.execute()
+    print(f"✅ 已上傳：https://www.youtube.com/watch?v={response['id']}")
+```
+
+</Accordion>
+
+<Accordion title="GitHub Actions 自動化觸發" icon="github">
+
+```yaml
+# .github/workflows/auto-pipeline.yml
+name: AI Video Pipeline
+on:
+  push:
+    paths:
+      - 'data/script.yaml'
+jobs:
+  build-video:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: |
+          sudo apt-get install -y ffmpeg
+          pip install gtts pyyaml moviepy
+          python main_pipeline.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: final-video
+          path: data/output/*.mp4
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+---
+
+<CardGroup cols={2}>
+  <Card title="回到總覽" icon="house" href="/pipeline/overview">
+    查看整體架構說明
+  </Card>
+  <Card title="缺口清單" icon="list-check" href="/pipeline/gaps-checklist">
+    查看各環節詳細狀態
+  </Card>
+</CardGroup>

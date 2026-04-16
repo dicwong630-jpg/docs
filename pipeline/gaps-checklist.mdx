@@ -1,0 +1,122 @@
+---
+title: "缺口與驗證清單"
+description: "全自動創作成品視頻 — 各環節 Ready / 待補 / 技術瓶頸細分"
+icon: "list-check"
+---
+
+以下清單依「AI 劇本 → 素材分流 → TTS 生成 → AI 圖片 → 自動合成影片 → 自動發布」六大環節逐一盤點，並標示目前狀態。
+
+---
+
+## 狀態標示說明
+
+| 標示 | 意義 |
+|------|------|
+| ✅ Ready | 設計完整、可直接執行 |
+| 🟡 部分 Ready | 骨架已有，需補細節或 API 金鑰 |
+| 🔴 待補 | 尚未實作，需從頭建立 |
+| ⚠️ 技術瓶頸 | 存在已知限制或外部依賴需留意 |
+
+---
+
+## 環節一：AI 自動編劇
+
+| 子環節 | 狀態 | 說明 |
+|--------|------|------|
+| 六大準則規範化（`config/rules.yaml`） | 🟡 部分 Ready | 準則框架已有，需將六條目完整文字化、補入 YAML |
+| 劇本結構定義（YAML 欄位） | 🟡 部分 Ready | 骨架設計完整，需補範例劇本（示範集）供 AI 模板參考 |
+| 調用 LLM API 自動生成劇本（`generate_script.py`） | 🔴 待補 | 需實作 OpenAI / Claude API 呼叫、將規則注入 prompt |
+| 劇本驗證（符合準則的自動檢查） | 🔴 待補 | 需寫校驗邏輯，拒絕不符六大準則的生成結果 |
+
+---
+
+## 環節二：素材分流（lobster_porter）
+
+| 子環節 | 狀態 | 說明 |
+|--------|------|------|
+| 批量搬運與命名（`auto_move_tag.py`） | ✅ Ready | lobster_porter 核心功能，可直接調用 |
+| 依劇本自動生成素材需求清單（`dispatch_materials.py`） | 🟡 部分 Ready | 解析邏輯框架已有，需補「劇本 YAML → 素材清單」具體映射代碼 |
+| 素材缺失自動告警 | 🔴 待補 | 若某段素材缺失應輸出警告並暫停流程 |
+
+---
+
+## 環節三：TTS 語音生成
+
+| 子環節 | 狀態 | 說明 |
+|--------|------|------|
+| TTS 工具選型 | 🟡 部分 Ready | 已評估 gTTS / Coqui / Azure TTS，尚未整合進腳本 |
+| 自動逐段生成音檔（`ai_media_gen.py` TTS 部分） | 🔴 待補 | 需實作：讀取劇本對白 → 呼叫 TTS API → 存 `/data/audio/` |
+| 中文（粵語/普通話）支援驗證 | ⚠️ 技術瓶頸 | gTTS 支援 `zh-TW`，Coqui 粵語模型較少；建議先用 Azure TTS 驗證 |
+| 音檔與劇本段落對應（metadata） | 🔴 待補 | 每個 `.mp3` 需對應劇本 `scene_id`，方便後續合成對位 |
+
+---
+
+## 環節四：AI 圖片生成
+
+| 子環節 | 狀態 | 說明 |
+|--------|------|------|
+| 圖像生成工具選型 | 🟡 部分 Ready | 已評估 Replicate API / Stable Diffusion，尚未整合 |
+| 自動逐場景生成美術圖（`ai_media_gen.py` 圖片部分） | 🔴 待補 | 需實作：讀取劇本場景描述 → 調用圖像 API → 存 `/data/image/` |
+| 圖片風格一致性（角色外觀統一） | ⚠️ 技術瓶頸 | SD 每次生成結果不保證風格統一；建議使用 LoRA 模型或固定 seed + reference image |
+| 圖片與劇本場景對應（metadata） | 🔴 待補 | 同音檔，需有 `scene_id` 對應標記 |
+
+---
+
+## 環節五：影片自動合成
+
+| 子環節 | 狀態 | 說明 |
+|--------|------|------|
+| 合成工具選型（moviepy / ffmpeg） | 🟡 部分 Ready | 骨架已在 `media_assembler.py`，尚未完整實作 |
+| 音畫自動合成（圖片+音訊→片段） | 🔴 待補 | 需實作：逐段讀取音圖 → 合成片段 mp4 |
+| 字幕自動疊加 | 🔴 待補 | 可用 moviepy `TextClip` 或 ffmpeg `subtitles` filter，需從劇本提取文字 |
+| 片段串接成完整影片 | 🔴 待補 | 需按劇本順序串接所有 segments → 輸出最終 `output.mp4` |
+| 背景音樂疊加（可選） | 🔴 待補 | 可後期增加，先以純語音版本作 MVP |
+
+---
+
+## 環節六：自動發布
+
+| 子環節 | 狀態 | 說明 |
+|--------|------|------|
+| YouTube Data API v3 整合 | 🔴 待補 | 需申請 OAuth 2.0 憑證、實作上傳腳本 |
+| 自動填寫標題、描述、標籤 | 🔴 待補 | 可從劇本 YAML 自動提取 `title`、`description`、`tags` 欄位 |
+| 發布日誌與錯誤告警 | 🔴 待補 | 每次發布應生成日誌，發布失敗需通知（GitHub Issue / Email） |
+| 雲端平台整合（Colab / GitHub Actions） | 🟡 部分 Ready | 已評估可行性，需補具體 workflow YAML 或 notebook |
+
+---
+
+## 總結：優先補完順序
+
+<Steps>
+
+<Step title="補完六大準則 + 劇本 YAML 範例">
+  這是整個產線的「大腦」，必須先完成才能驅動後續所有步驟。
+</Step>
+
+<Step title="實作 TTS 語音生成腳本">
+  先用 `gTTS` 快速驗證流程可通，之後再替換為更高品質的 Azure TTS 或 Coqui。
+</Step>
+
+<Step title="實作圖片生成腳本">
+  先用 `Replicate API` 快速生成場景圖，驗證圖文對位邏輯正確。
+</Step>
+
+<Step title="實作影片合成（moviepy）">
+  最小版本：圖片 + 音訊 → mp4；字幕和背景音樂可後期補充。
+</Step>
+
+<Step title="驗證完整 MVP 跑通一集">
+  跑通 ko仔教學第 1 集，確認從劇本到 mp4 輸出無誤。
+</Step>
+
+<Step title="補完 YouTube 自動發布">
+  以手動上傳作過渡；待 MVP 驗證後再整合 YouTube API 自動化。
+</Step>
+
+</Steps>
+
+---
+
+<Card title="查看 MVP 最短路徑與腳本" icon="rocket" href="/pipeline/mvp-path">
+  下一步：按優先順序的完整 MVP 實作指引
+</Card>
