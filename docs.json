@@ -44,6 +44,12 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "Tools",
+            "pages": [
+              "lobster-porter"
+            ]
           }
         ]
       },

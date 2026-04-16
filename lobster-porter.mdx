@@ -1,0 +1,216 @@
+---
+title: "龍蝦搬運工"
+description: "批量搜尋、整理、搬運和分類知識文件倉庫中的文件"
+icon: "truck-moving"
+---
+
+**龍蝦搬運工**（Lobster Porter）是一個輕量 Python 工具模組，專為 `docs` 知識文件倉庫設計。
+它讓你能在命令列（CLI）或程式碼中快速**搬運、整理、索引和分類**大量 Markdown、PDF、Word 文件，
+並支援批量操作、撤銷、以及可擴充的插件框架。
+
+---
+
+## 快速開始
+
+### 安裝依賴
+
+龍蝦搬運工只使用 Python 3.8+ 標準庫，無需安裝額外套件。
+
+```bash
+# 進入倉庫根目錄
+cd /path/to/docs
+
+# 直接執行 CLI
+python -m lobster_porter.cli --help
+```
+
+### 目錄結構
+
+```
+lobster_porter/
+├── __init__.py        # 套件入口
+├── core.py            # LobsterPorter 主類（搜尋、移動、複製、撤銷、索引）
+├── strategies.py      # 整理策略（按格式 / 標籤 / 日期 / 關鍵字）
+├── cli.py             # 命令列介面
+└── plugins/
+    ├── __init__.py
+    ├── base.py        # BasePlugin 抽象基類
+    └── examples.py    # 四個內建示範插件
+```
+
+---
+
+## CLI 指令
+
+### 搜尋文件
+
+```bash
+# 搜尋所有 Markdown 文件
+python -m lobster_porter.cli search ./docs --formats markdown
+
+# 使用 glob 模式搜尋
+python -m lobster_porter.cli search ./docs --pattern "intro*"
+
+# 只搜尋當前目錄（不遞迴）
+python -m lobster_porter.cli search ./docs --no-recursive
+```
+
+### 移動與複製
+
+```bash
+# 移動單一文件
+python -m lobster_porter.cli move ./docs/old.md ./docs/archive/old.md
+
+# 複製目錄
+python -m lobster_porter.cli copy ./docs/essentials ./docs/backup/essentials
+
+# 批量移動
+python -m lobster_porter.cli batch-move ./archive file1.md file2.md file3.md
+
+# 批量複製
+python -m lobster_porter.cli batch-copy ./backup file1.md file2.md
+```
+
+### 撤銷操作
+
+```bash
+# 撤銷最近一次操作（包括批量操作）
+python -m lobster_porter.cli undo
+```
+
+### 生成索引
+
+```bash
+# 掃描整個倉庫並生成 INDEX.md
+python -m lobster_porter.cli index --output ./INDEX.md
+
+# 只索引 Markdown 文件
+python -m lobster_porter.cli index --path ./api-reference --formats markdown --output ./api-reference/INDEX.md
+```
+
+### 按標籤導出
+
+```bash
+# 導出所有包含 "quickstart" 標籤的 Markdown 文件
+python -m lobster_porter.cli export-tag quickstart ./export/quickstart
+```
+
+---
+
+## 整理策略
+
+整理策略（Strategies）允許你按規則把一個目錄的文件自動分類到不同子目錄。
+
+```python
+from lobster_porter.core import LobsterPorter
+from lobster_porter.strategies import ByFormatStrategy, ByTagStrategy, ByDateStrategy, ByKeywordStrategy
+
+porter = LobsterPorter("/path/to/docs")
+
+# 按格式分類：markdown/ pdf/ word/ other/
+ByFormatStrategy().apply(porter, src="./inbox", dst="./sorted")
+
+# 按 frontmatter tags 分類
+ByTagStrategy().apply(porter, src="./inbox", dst="./by-tag")
+
+# 按修改日期分類：2024/03/ 2024/04/ …
+ByDateStrategy().apply(porter, src="./inbox", dst="./by-date")
+
+# 按關鍵字分類
+ByKeywordStrategy({"api": ["api", "endpoint"], "guide": ["guide", "intro"]}).apply(
+    porter, src="./inbox", dst="./by-keyword"
+)
+```
+
+---
+
+## 插件系統
+
+### 使用內建插件
+
+```python
+from lobster_porter import LobsterPorter
+from lobster_porter.plugins import (
+    IndexGeneratorPlugin,
+    TagExporterPlugin,
+    BulkRenamePlugin,
+    FormatScannerPlugin,
+)
+
+porter = LobsterPorter(".")
+
+# 載入插件
+porter.register_plugin(IndexGeneratorPlugin())
+porter.register_plugin(TagExporterPlugin())
+porter.register_plugin(BulkRenamePlugin())
+porter.register_plugin(FormatScannerPlugin())
+
+# 執行索引生成
+porter.run_plugin("index_generator", path="./api-reference", output="./api-reference/INDEX.md")
+
+# 統計文件格式
+porter.run_plugin("format_scanner")
+
+# 批量加前綴（預覽模式）
+porter.run_plugin("bulk_rename", path="./essentials", mode="prefix", value="2024_", dry_run=True)
+```
+
+### CLI 執行插件
+
+```bash
+# 列出所有插件
+python -m lobster_porter.cli plugins
+
+# 執行格式掃描
+python -m lobster_porter.cli plugin format_scanner
+
+# 批量加前綴（預覽）
+python -m lobster_porter.cli plugin bulk_rename --path ./essentials --mode prefix --value 2024_ --dry-run
+```
+
+---
+
+## 開發自訂插件
+
+繼承 `BasePlugin` 並實作 `run()` 方法，然後用 `register_plugin()` 載入。
+
+```python
+from lobster_porter.plugins.base import BasePlugin
+
+class MyPlugin(BasePlugin):
+    name = "my_plugin"
+    description = "我的自訂插件"
+
+    def run(self, porter, **kwargs):
+        # porter 是 LobsterPorter 實例
+        files = porter.search(formats=["markdown"])
+        print(f"找到 {len(files)} 個 Markdown 文件")
+        return files
+
+# 載入並執行
+porter.register_plugin(MyPlugin())
+porter.run_plugin("my_plugin")
+```
+
+---
+
+## 內建插件一覽
+
+| 插件名稱 | 功能 |
+|---|---|
+| `index_generator` | 掃描目錄，生成 Markdown 格式索引文件（INDEX.md） |
+| `tag_exporter` | 按標籤篩選 Markdown 文件並批量導出 |
+| `bulk_rename` | 批量重命名文件（prefix / suffix / replace 模式） |
+| `format_scanner` | 統計並報告各格式文件的數量 |
+
+---
+
+## 支援格式
+
+| 格式代碼 | 副檔名 |
+|---|---|
+| `markdown` | `.md`, `.mdx` |
+| `pdf` | `.pdf` |
+| `word` | `.docx`, `.doc` |
+| `text` | `.txt` |
+| `json` | `.json` |
