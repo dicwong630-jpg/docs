@@ -1,63 +1,63 @@
 ---
-title: 'Markdown syntax'
-description: 'Text, title, and styling in standard markdown'
+title: 'Markdown 語法'
+description: '標準 Markdown 的文字、標題與樣式設定'
 icon: 'text-size'
 ---
 
-## Titles
+## 標題
 
-Best used for section headers.
+最適合用於區段標頭。
 
 ```md
-## Titles
+## 標題
 ```
 
-### Subtitles
+### 子標題
 
-Best used for subsection headers.
+最適合用於子區段標頭。
 
 ```md
-### Subtitles
+### 子標題
 ```
 
 <Tip>
 
-Each **title** and **subtitle** creates an anchor and also shows up on the table of contents on the right.
+每個**標題**和**子標題**都會建立錨點，並顯示在右側目錄中。
 
 </Tip>
 
-## Text formatting
+## 文字格式
 
-We support most markdown formatting. Simply add `**`, `_`, or `~` around text to format it.
+我們支援大多數 Markdown 格式。在文字周圍加上 `**`、`_` 或 `~` 即可設定格式。
 
-| Style         | How to write it   | Result          |
-| ------------- | ----------------- | --------------- |
-| Bold          | `**bold**`        | **bold**        |
-| Italic        | `_italic_`        | _italic_        |
-| Strikethrough | `~strikethrough~` | ~strikethrough~ |
+| 樣式     | 寫法                | 效果            |
+| -------- | ------------------- | --------------- |
+| 粗體     | `**粗體**`          | **粗體**        |
+| 斜體     | `_斜體_`            | _斜體_          |
+| 刪除線   | `~刪除線~`          | ~刪除線~        |
 
-You can combine these. For example, write `**_bold and italic_**` to get **_bold and italic_** text.
+你可以組合這些格式。例如，寫 `**_粗體和斜體_**` 可得到**_粗體和斜體_**文字。
 
-You need to use HTML to write superscript and subscript text. That is, add `<sup>` or `<sub>` around your text.
+上標和下標需要使用 HTML 語法，即在文字周圍加上 `<sup>` 或 `<sub>`。
 
-| Text Size   | How to write it          | Result                 |
-| ----------- | ------------------------ | ---------------------- |
-| Superscript | `<sup>superscript</sup>` | <sup>superscript</sup> |
-| Subscript   | `<sub>subscript</sub>`   | <sub>subscript</sub>   |
+| 文字大小 | 寫法                    | 效果                   |
+| -------- | ----------------------- | ---------------------- |
+| 上標     | `<sup>上標</sup>`       | <sup>上標</sup>        |
+| 下標     | `<sub>下標</sub>`       | <sub>下標</sub>        |
 
-## Linking to pages
+## 連結到頁面
 
-You can add a link by wrapping text in `[]()`. You would write `[link to google](https://google.com)` to [link to google](https://google.com).
+你可以用 `[]()` 包住文字來新增連結。例如寫 `[前往 Google](https://google.com)` 即可 [前往 Google](https://google.com)。
 
-Links to pages in your docs need to be root-relative. Basically, you should include the entire folder path. For example, `[link to text](/writing-content/text)` links to the page "Text" in our components section.
+文件內部頁面的連結需使用根相對路徑，即應包含完整的資料夾路徑。例如，`[連結到文字](/writing-content/text)` 連結到我們元件區段中的「文字」頁面。
 
-Relative links like `[link to text](../text)` will open slower because we cannot optimize them as easily.
+相對連結如 `[連結到文字](../text)` 載入較慢，因為我們無法像最佳化根相對路徑那樣對其進行最佳化。
 
-## Blockquotes
+## 引用區塊
 
-### Singleline
+### 單行
 
-To create a blockquote, add a `>` in front of a paragraph.
+在段落前加上 `>` 即可建立引用區塊。
 
 > Dorothy followed her through many of the beautiful rooms in her castle.
 
@@ -65,7 +65,7 @@ To create a blockquote, add a `>` in front of a paragraph.
 > Dorothy followed her through many of the beautiful rooms in her castle.
 ```
 
-### Multiline
+### 多行
 
 > Dorothy followed her through many of the beautiful rooms in her castle.
 >
@@ -79,7 +79,7 @@ To create a blockquote, add a `>` in front of a paragraph.
 
 ### LaTeX
 
-Mintlify supports [LaTeX](https://www.latex-project.org) through the Latex component.
+Mintlify 透過 Latex 元件支援 [LaTeX](https://www.latex-project.org)。
 
 <Latex>8 x (vk x H1 - H2) = (0,1)</Latex>
 

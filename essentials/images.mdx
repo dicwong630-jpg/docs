@@ -1,6 +1,6 @@
 ---
-title: 'Images and embeds'
-description: 'Add image, video, and other HTML elements'
+title: '圖片與嵌入內容'
+description: '新增圖片、影片及其他 HTML 元素'
 icon: 'image'
 ---
 
@@ -9,33 +9,33 @@ icon: 'image'
   src="https://mintlify-assets.b-cdn.net/bigbend.jpg"
 />
 
-## Image
+## 圖片
 
-### Using Markdown
+### 使用 Markdown
 
-The [markdown syntax](https://www.markdownguide.org/basic-syntax/#images) lets you add images using the following code
+[Markdown 語法](https://www.markdownguide.org/basic-syntax/#images)可讓你使用以下程式碼新增圖片：
 
 ```md
-![title](/path/image.jpg)
+![標題](/path/image.jpg)
 ```
 
-Note that the image file size must be less than 5MB. Otherwise, we recommend hosting on a service like [Cloudinary](https://cloudinary.com/) or [S3](https://aws.amazon.com/s3/). You can then use that URL and embed.
+請注意，圖片檔案大小必須小於 5MB。若超過此限制，建議使用 [Cloudinary](https://cloudinary.com/) 或 [S3](https://aws.amazon.com/s3/) 等服務托管，再以 URL 嵌入。
 
-### Using embeds
+### 使用嵌入語法
 
-To get more customizability with images, you can also use [embeds](/writing-content/embed) to add images
+若需要更多圖片自訂彈性，也可以使用[嵌入語法](/writing-content/embed)新增圖片：
 
 ```html
 <img height="200" src="/path/image.jpg" />
 ```
 
-## Embeds and HTML elements
+## 嵌入內容與 HTML 元素
 
 <iframe
   width="560"
   height="315"
   src="https://www.youtube.com/embed/4KzFe50RQkQ"
-  title="YouTube video player"
+  title="YouTube 影片播放器"
   frameBorder="0"
   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
   allowFullScreen
@@ -46,13 +46,13 @@ To get more customizability with images, you can also use [embeds](/writing-cont
 
 <Tip>
 
-Mintlify supports [HTML tags in Markdown](https://www.markdownguide.org/basic-syntax/#html). This is helpful if you prefer HTML tags to Markdown syntax, and lets you create documentation with infinite flexibility.
+Mintlify 支援 [Markdown 中的 HTML 標籤](https://www.markdownguide.org/basic-syntax/#html)。這在你偏好使用 HTML 標籤而非 Markdown 語法時非常有用，也讓你能以無限彈性建立文件。
 
 </Tip>
 
-### iFrames
+### iFrame
 
-Loads another HTML page within the document. Most commonly used for embedding videos.
+在文件中載入另一個 HTML 頁面。最常用於嵌入影片。
 
 ```html
 <iframe src="https://www.youtube.com/embed/4KzFe50RQkQ"> </iframe>

@@ -1,94 +1,94 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: '本機開發'
+description: '在本機預覽變更，即時更新文件內容'
 ---
 
 <Info>
-  **Prerequisites**:
-  - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
+  **前置需求**：
+  - Node.js 19 版本或更高版本
+  - 包含 `docs.json` 的文件儲存庫
 </Info>
 
-Follow these steps to install and run Mintlify on your operating system.
+依照以下步驟，在你的作業系統上安裝並執行 Mintlify。
 
 <Steps>
-<Step title="Install the Mintlify CLI">
+<Step title="安裝 Mintlify CLI">
 
 ```bash
 npm i -g mint
 ```
 </Step>
 
-<Step title="Preview locally">
+<Step title="在本機預覽">
 
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
+進入包含 `docs.json` 的文件目錄，執行以下指令：
 
 ```bash
 mint dev
 ```
 
-A local preview of your documentation will be available at `http://localhost:3000`.
+本機預覽網頁將在 `http://localhost:3000` 啟動。
 
 </Step>
 </Steps>
 
-## Custom ports
+## 自訂連接埠
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+Mintlify 預設使用 3000 連接埠。你可以使用 `--port` 參數自訂連接埠。例如，若要使用 3333 連接埠，執行此指令：
 
 ```bash
 mint dev --port 3333
 ```
 
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
+若嘗試使用已佔用的連接埠，Mintlify 會自動切換至下一個可用連接埠：
 
 ```md
 Port 3000 is already in use. Trying 3001 instead.
 ```
 
-## Mintlify versions
+## Mintlify 版本
 
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
+每個 CLI 版本對應特定的 Mintlify 版本。若本機預覽與正式版本不一致，請更新 CLI：
 
 ```bash
-npm mint update
+mint update
 ```
 
-## Validating links
+## 驗證連結
 
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
+CLI 可協助驗證文件中的連結。若要找出任何失效連結，請使用以下指令：
 
 ```bash
 mint broken-links
 ```
 
-## Deployment
+## 部署
 
-If the deployment is successful, you should see the following:
+部署成功後，你應該會看到以下畫面：
 
 <Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
+  <img src="/images/checks-passed.png" alt="部署確認訊息截圖，顯示「所有檢查已通過」。" style={{ borderRadius: '0.5rem' }} />
 </Frame>
 
-## Code formatting
+## 程式碼格式化
 
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
+建議在 IDE 安裝擴充套件以識別和格式化 MDX。如果你使用 VSCode，可以安裝 [MDX VSCode 擴充套件](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) 進行語法高亮，以及 [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) 進行程式碼格式化。
 
-## Troubleshooting
+## 疑難排解
 
 <AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
+  <Accordion title='錯誤：無法使用 darwin-arm64 執行環境載入「sharp」模組'>
 
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
+    這可能是因為 Node 版本過舊。請嘗試以下步驟：
+    1. 移除目前安裝的 CLI 版本：`npm remove -g mint`
+    2. 升級至 Node v19 或更高版本。
+    3. 重新安裝 CLI：`npm i -g mint`
   </Accordion>
 
-  <Accordion title="Issue: Encountering an unknown error">
+  <Accordion title="問題：遇到未知錯誤">
   
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
+    解決方法：進入裝置的根目錄，刪除 `~/.mintlify` 資料夾，然後再次執行 `mint dev`。
   </Accordion>
 </AccordionGroup>
 
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+想了解最新 CLI 版本的變更？請查看 [CLI 更新記錄](https://www.npmjs.com/package/mintlify?activeTab=versions)。

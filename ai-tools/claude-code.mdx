@@ -1,41 +1,39 @@
 ---
-title: "Claude Code setup"
-description: "Configure Claude Code for your documentation workflow"
+title: "Claude Code 設定"
+description: "為文件工作流程設定 Claude Code"
 icon: "asterisk"
 ---
 
-Set up Claude Code to help you write and maintain your Mintlify documentation.
+設定 Claude Code，協助你撰寫和維護 Mintlify 文件。
 
-## Prerequisites
+## 前置需求
 
-- Active Claude subscription (Pro, Max, or API access)
+- 有效的 Claude 訂閱（Pro、Max 或 API 存取權）
 
-## Setup
+## 設定步驟
 
 <Steps>
-<Step title="Install Claude Code">
+<Step title="安裝 Claude Code">
   ```bash
   npm install -g @anthropic-ai/claude-code
   ```
 </Step>
 
-<Step title="Install the Mintlify skill">
-  In your docs directory, run:
+<Step title="安裝 Mintlify 技能">
+  在文件目錄中執行：
 
   ```bash
   npx skills add https://mintlify.com/docs
   ```
 
-  This gives Claude Code Mintlify's component reference, writing standards,
-  and workflow guidance.
+  這會將 Mintlify 的元件參考、撰寫標準和工作流程指引提供給 Claude Code 使用。
 </Step>
 
-<Step title="Customize project instructions">
-  Edit `AGENTS.md` in your project root to add project-specific terminology,
-  style preferences, and content boundaries.
+<Step title="自訂專案說明">
+  編輯專案根目錄中的 `AGENTS.md`，加入專案專屬的術語、樣式偏好和內容邊界。
 </Step>
 
-<Step title="Start writing with Claude Code">
+<Step title="開始使用 Claude Code 撰寫">
   ```bash
   claude
   ```

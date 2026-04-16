@@ -1,80 +1,80 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "快速入門"
+description: "在幾分鐘內建立精彩的文件網站"
 ---
 
-## Get started in three steps
+## 三步驟快速上手
 
-Get your documentation site running locally and make your first customization.
+在本機啟動你的文件網站，並完成第一次自訂設定。
 
-### Step 1: Set up your local environment
+### 第一步：設定本機環境
 
 <AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
+  <Accordion icon="copy" title="將文件庫複製到本機">
+    在上線流程中，如果你尚未建立 GitHub 儲存庫，系統會為你建立一個包含文件內容的儲存庫。你可以在 [管理後台](https://dashboard.mintlify.com) 找到該儲存庫的連結。
+
+    若要將儲存庫複製到本機以便編輯和預覽文件，請參閱 GitHub 文件中的 [複製儲存庫](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) 教學。
   </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
+  <Accordion icon="rectangle-terminal" title="啟動預覽伺服器">
+    1. 安裝 Mintlify CLI：`npm i -g mint`
+    2. 進入文件目錄並執行：`mint dev`
+    3. 開啟 `http://localhost:3000` 即可即時預覽你的文件！
+
+    <Tip>你在編輯檔案時，預覽畫面會自動更新。</Tip>
   </Accordion>
 </AccordionGroup>
 
-### Step 2: Deploy your changes
+### 第二步：部署你的變更
 
 <AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+  <Accordion icon="github" title="安裝 GitHub 應用程式">
+    從 [管理後台](https://dashboard.mintlify.com/settings/organization/github-app) 安裝 Mintlify GitHub 應用程式。
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    我們的 GitHub 應用程式會自動將你的變更部署到文件網站，無需手動管理部署流程。
+  </Accordion>
+  <Accordion icon="palette" title="更新網站名稱與色彩">
+    作為第一次修改，讓我們更新文件網站的名稱和色彩。
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
+    1. 在編輯器中開啟 `docs.json`。
+    2. 將 `"name"` 欄位改為你的專案名稱。
+    3. 更新 `"colors"` 以符合你的品牌色彩。
+    4. 儲存後即可在 `http://localhost:3000` 即時看到變更。
+
+    <Tip>嘗試更改主色調，立即看到明顯的差異！</Tip>
   </Accordion>
 </AccordionGroup>
 
-### Step 3: Go live
+### 第三步：正式上線
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
+<Accordion icon="rocket" title="發布你的文件">
+  1. Commit 並 push 你的變更。
+  2. 你的文件將在片刻後更新並正式上線！
 </Accordion>
 
-## Next steps
+## 下一步
 
-Now that you have your docs running, explore these key features:
+文件網站啟動後，探索以下重要功能：
 
 <CardGroup cols={2}>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
+<Card title="撰寫內容" icon="pen-to-square" href="/essentials/markdown">
+  學習 MDX 語法，開始撰寫你的文件。
 </Card>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
+<Card title="自訂樣式" icon="palette" href="/essentials/settings">
+  讓文件完美符合你的品牌風格。
 </Card>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
+<Card title="加入程式碼範例" icon="square-code" href="/essentials/code">
+  加入語法高亮的程式碼區塊。
 </Card>
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
+<Card title="API 文件" icon="code" href="/api-reference/introduction">
+  從 OpenAPI 規格自動生成 API 文件。
 </Card>
 
 </CardGroup>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  **需要協助？** 查看我們的 [完整文件](https://mintlify.com/docs) 或加入 [社群](https://mintlify.com/community)。
 </Note>

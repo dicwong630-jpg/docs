@@ -1,33 +1,39 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
+> **首次設定**：請根據你的專案自訂此檔案。
+> 若需 Mintlify 產品知識（元件、配置、撰寫標準），
+> 請安裝 Mintlify 技能：`npx skills add https://mintlify.com/docs`
 
-# Documentation project instructions
+# 文件專案說明
 
-## About this project
+## 關於本專案
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Run `mint dev` to preview locally
-- Run `mint broken-links` to check links
+- 本文件網站基於 [Mintlify](https://mintlify.com) 建置
+- 頁面為帶有 YAML frontmatter 的 MDX 檔案
+- 配置檔位於 `docs.json`
+- 執行 `mint dev` 在本機預覽
+- 執行 `mint broken-links` 檢查連結
+- 所有文件內容以**繁體中文**撰寫
+- 字型使用 Noto Sans TC（設定於 `assets/custom.css`）
 
-## Terminology
+## 術語規範
 
-<!-- Add product-specific terms and preferred usage -->
-<!-- Example: Use "workspace" not "project", "member" not "user" -->
+- 使用「文件」而非「docs」
+- 使用「元件」而非「component」
+- 使用「側邊欄」而非「sidebar」
+- 使用「導覽」而非「navigation」
+- 使用「管理後台」而非「dashboard」
 
-## Style preferences
+## 樣式偏好
 
-<!-- Add any project-specific style rules below -->
+- 使用主動語氣和第二人稱（「你」）
+- 句子保持簡潔——每句一個概念
+- 標題使用句子大小寫
+- UI 元素使用粗體：點擊**設定**
+- 檔名、指令、路徑和程式碼引用使用程式碼格式
+- 標點符號使用全形中文標點（。，、：；！？）
+- 中英文之間保留適當空格
 
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
+## 內容範圍
 
-## Content boundaries
-
-<!-- Define what should and shouldn't be documented -->
-<!-- Example: Don't document internal admin features -->
+- 文件內容以繁體中文為主
+- 技術術語可保留英文原文並於括號內附上中文說明
+- 程式碼區塊和指令維持英文原文

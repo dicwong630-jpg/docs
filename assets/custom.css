@@ -1,0 +1,47 @@
+/* 繁體中文排版最佳化 — Noto Sans TC */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+
+:root {
+  --font-family-zh: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei',
+    'Heiti TC', sans-serif;
+}
+
+body,
+.prose,
+p,
+li,
+td,
+th,
+blockquote,
+.content,
+[class*='markdown'] {
+  font-family: var(--font-family-zh) !important;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-zh) !important;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+}
+
+/* 段落間距加大，提升中文閱讀舒適度 */
+p {
+  margin-bottom: 1.2em;
+}
+
+/* 程式碼區塊保留等寬字型 */
+code,
+pre,
+kbd,
+samp {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace !important;
+  letter-spacing: 0;
+}

@@ -1,28 +1,27 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: '簡介'
+description: 'API 端點展示區段範例'
 ---
 
 <Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
+  如果你不需要建立 API 參考文件，可以刪除 api-reference 資料夾來移除此區段。
 </Note>
 
-## Welcome
+## 歡迎
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
+建立 API 文件有兩種方式：[OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) 和 [MDX 元件](https://mintlify.com/docs/api-playground/mdx/configuration)。本入門套件使用以下 OpenAPI 規格。
 
 <Card
-  title="Plant Store Endpoints"
+  title="植物商店端點"
   icon="leaf"
   href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
 >
-  View the OpenAPI specification file
+  查看 OpenAPI 規格檔案
 </Card>
 
-## Authentication
+## 驗證方式
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+所有 API 端點均使用 Bearer Token 進行驗證，Token 資訊從規格檔案中讀取。
 
 ```json
 "security": [

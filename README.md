@@ -1,55 +1,66 @@
-# Mintlify Starter Kit
+# AI 自動化影音製作文件
 
-Use the starter kit to get your docs deployed and ready to customize.
+使用本入門套件，快速部署並自訂你的繁體中文文件網站。
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+點擊儲存庫頂部的綠色 **Use this template** 按鈕，複製本 Mintlify 入門套件。套件包含以下範例：
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+- 指南頁面
+- 導覽結構
+- 自訂設定
+- API 參考頁面
+- 常用元件使用方式
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+**[查看完整快速入門指南](https://starter.mintlify.com/quickstart)**
 
-## AI-assisted writing
+## AI 輔助撰寫
 
-Set up your AI coding tool to work with Mintlify:
+設定你的 AI 編碼工具以搭配 Mintlify 使用：
 
 ```bash
 npx skills add https://mintlify.com/docs
 ```
 
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
+此指令會為你設定的 AI 工具（如 Claude Code、Cursor、Windsurf 等）安裝 Mintlify 的文件技能，包含元件參考、撰寫標準和工作流程指引。
 
-See the [AI tools guides](/ai-tools) for tool-specific setup.
+詳細工具設定請參閱 [AI 工具指南](/ai-tools)。
 
-## Development
+## 本機開發
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+安裝 [Mintlify CLI](https://www.npmjs.com/package/mint)，在本機預覽文件變更。使用以下指令安裝：
 
 ```
 npm i -g mint
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+在包含 `docs.json` 的文件根目錄執行以下指令：
 
 ```
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+在 `http://localhost:3000` 查看本機預覽。
 
-## Publishing changes
+## 發布變更
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+從 [管理後台](https://dashboard.mintlify.com/settings/organization/github-app) 安裝我們的 GitHub 應用程式，將儲存庫的變更同步到部署環境。推送到預設分支後，變更將自動部署到正式環境。
 
-## Need help?
+## 繁體中文排版
 
-### Troubleshooting
+本專案已預設啟用繁體中文排版最佳化：
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+- **字型**：Noto Sans TC（Google Fonts）
+- **行高**：1.9（提升中文閱讀舒適度）
+- **字距**：適當調整，符合中文閱讀習慣
+- **標題字重**：700，確保清晰層次感
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+自訂 CSS 樣式位於 `assets/custom.css`。
+
+## 需要協助？
+
+### 疑難排解
+
+- 若開發環境無法啟動：執行 `mint update` 確保使用最新版 CLI。
+- 若頁面顯示 404：確認你在包含有效 `docs.json` 的資料夾中執行。
+
+### 參考資源
+- [Mintlify 官方文件](https://mintlify.com/docs)

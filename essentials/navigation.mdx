@@ -1,27 +1,27 @@
 ---
-title: 'Navigation'
-description: 'The navigation field in docs.json defines the pages that go in the navigation menu'
+title: '導覽結構'
+description: 'docs.json 中的 navigation 欄位定義出現在導覽選單中的頁面'
 icon: 'map'
 ---
 
-The navigation menu is the list of links on every website.
+導覽選單是每個網站上的連結清單。
 
-You will likely update `docs.json` every time you add a new page. Pages do not show up automatically.
+每次新增頁面時，你可能都需要更新 `docs.json`。頁面不會自動出現在導覽中。
 
-## Navigation syntax
+## 導覽語法
 
-Our navigation syntax is recursive which means you can make nested navigation groups. You don't need to include `.mdx` in page names.
+我們的導覽語法是遞迴式的，意味著你可以建立巢狀導覽群組。頁面名稱不需要包含 `.mdx` 副檔名。
 
 <CodeGroup>
 
-```json Regular Navigation
+```json 一般導覽
 "navigation": {
   "tabs": [
     {
-      "tab": "Docs",
+      "tab": "文件",
       "groups": [
         {
-          "group": "Getting Started",
+          "group": "快速入門",
           "pages": ["quickstart"]
         }
       ]
@@ -30,18 +30,18 @@ Our navigation syntax is recursive which means you can make nested navigation gr
 }
 ```
 
-```json Nested Navigation
+```json 巢狀導覽
 "navigation": {
   "tabs": [
     {
-      "tab": "Docs",
+      "tab": "文件",
       "groups": [
         {
-          "group": "Getting Started",
+          "group": "快速入門",
           "pages": [
             "quickstart",
             {
-              "group": "Nested Reference Pages",
+              "group": "巢狀參考頁面",
               "pages": ["nested-reference-page"]
             }
           ]
@@ -54,26 +54,26 @@ Our navigation syntax is recursive which means you can make nested navigation gr
 
 </CodeGroup>
 
-## Folders
+## 資料夾
 
-Simply put your MDX files in folders and update the paths in `docs.json`.
+只需將 MDX 檔案放入資料夾，並更新 `docs.json` 中的路徑即可。
 
-For example, to have a page at `https://yoursite.com/your-folder/your-page` you would make a folder called `your-folder` containing an MDX file called `your-page.mdx`.
+例如，若要建立位於 `https://yoursite.com/your-folder/your-page` 的頁面，可建立名為 `your-folder` 的資料夾，其中包含名為 `your-page.mdx` 的 MDX 檔案。
 
 <Warning>
 
-You cannot use `api` for the name of a folder unless you nest it inside another folder. Mintlify uses Next.js which reserves the top-level `api` folder for internal server calls. A folder name such as `api-reference` would be accepted.
+除非將其巢狀放置於另一個資料夾內，否則不能使用 `api` 作為資料夾名稱。Mintlify 使用 Next.js，而 Next.js 保留頂層 `api` 資料夾供內部伺服器呼叫使用。`api-reference` 等資料夾名稱是可以接受的。
 
 </Warning>
 
-```json Navigation With Folder
+```json 含資料夾的導覽
 "navigation": {
   "tabs": [
     {
-      "tab": "Docs",
+      "tab": "文件",
       "groups": [
         {
-          "group": "Group Name",
+          "group": "群組名稱",
           "pages": ["your-folder/your-page"]
         }
       ]
@@ -82,6 +82,6 @@ You cannot use `api` for the name of a folder unless you nest it inside another 
 }
 ```
 
-## Hidden pages
+## 隱藏頁面
 
-MDX files not included in `docs.json` will not show up in the sidebar but are accessible through the search bar and by linking directly to them.
+未包含在 `docs.json` 中的 MDX 檔案不會出現在側邊欄，但可透過搜尋列或直接連結訪問。
