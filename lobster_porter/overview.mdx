@@ -1,0 +1,71 @@
+---
+title: '龍蝦搬運工概覽'
+description: '龍蝦搬運工（lobster_porter）的架構、已實作功能與 1.0 版本現狀'
+icon: 'lobster'
+---
+
+# 龍蝦搬運工（lobster_porter）
+
+龍蝦搬運工是一套可擴展的批量檔案搬運、整理、分類與自動標注工具，專為大型多媒體製作（如電影、動畫、廣告）的資料管理流程而設計。
+
+## 核心設計原則
+
+- **策略模式（Strategy Pattern）**：所有搬運、分類邏輯皆可替換或組合，滿足不同製作部門需求。
+- **插件化（Plugin Architecture）**：透過插件擴展自動處理邏輯，無需改動核心 codebase。
+- **可撤銷操作與日誌**：每次批量操作均記錄 log，支援單步撤銷，保障製作素材安全。
+- **CLI 優先**：所有功能以命令列介面驅動，方便整合進 CI/CD 或製作自動化管線。
+
+## 已實作模組（截至目前）
+
+<CardGroup cols={2}>
+  <Card title="批量移動與複製" icon="arrows-up-down-left-right">
+    支援根據規則批量搬移或複製任意檔案，包含乾跑（dry-run）預覽模式，避免誤操作。
+  </Card>
+  <Card title="批量分類與標籤" icon="tags">
+    可擴展的分類策略，支援按副檔名、場景代號、部門代碼等規則自動分類並加上標籤。
+  </Card>
+  <Card title="基礎 CLI 介面" icon="terminal">
+    統一命令列入口，支援 `move`、`copy`、`classify`、`tag` 子命令，並輸出結構化結果。
+  </Card>
+  <Card title="插件系統框架" icon="puzzle-piece">
+    插件載入與生命週期管理，開發者可撰寫自定義插件掛入任一處理階段。
+  </Card>
+</CardGroup>
+
+## 架構示意
+
+```
+lobster_porter/
+├── core/
+│   ├── mover.py          # 批量移動 / 複製引擎
+│   ├── classifier.py     # 分類策略主控器
+│   └── tagger.py         # 標籤管理器
+├── plugins/
+│   ├── base_plugin.py    # 插件抽象基類
+│   └── examples/         # 範例插件
+├── cli/
+│   └── main.py           # CLI 入口
+├── logs/
+│   └── operation_log.py  # 操作日誌與撤銷系統
+└── tests/
+    └── ...               # 單元測試與整合測試
+```
+
+## 版本狀態
+
+| 模組 | 狀態 |
+|------|------|
+| 批量移動 / 複製 | ✅ 已完成 |
+| 批量分類 | ✅ 已完成 |
+| 批量標籤 | ✅ 已完成 |
+| 操作日誌 | 🔄 開發中 |
+| 撤銷（Undo）系統 | 🔄 開發中 |
+| 格式支持插件（docx / pdf / 腳本）| ⬜ 待開發 |
+| 自定分類規則配置介面 | ⬜ 待開發 |
+| 批量重命名 | ⬜ 待開發 |
+| 索引目錄自動生成 / 導出 | ⬜ 待開發 |
+| 跨平台 / 雲端同步插件 | ⬜ 待開發 |
+
+<Note>
+詳細的電影製作痛點分析及模組優先順序，請參閱[電影製作場景分析](/lobster_porter/film-production)與[1.0 路線圖](/lobster_porter/roadmap)。
+</Note>
