@@ -1,0 +1,181 @@
+---
+title: 'VitePress 部署教學（繁體中文）'
+description: '本文介紹如何將 VitePress 專案部署到 Netlify 及 GitHub Pages，並提供常見問題排查建議。'
+---
+
+# VitePress 部署教學
+
+本教學說明如何將 VitePress 靜態文件網站部署到常見平台，包含 Netlify 與 GitHub Pages，適合繁體中文用戶參考。
+
+---
+
+## 前置條件
+
+- 已安裝 [Node.js](https://nodejs.org/) 版本 18 或以上
+- 已建立 VitePress 專案（如尚未建立，請先執行 `npm create vitepress@latest`）
+- 已將專案推送到 GitHub 倉庫
+
+---
+
+## 方法一：部署到 Netlify（推薦）
+
+Netlify 提供簡易的持續部署，每次推送到 GitHub 即自動重新建構並部署。
+
+### 步驟
+
+<Steps>
+  <Step title="新增 Netlify 設定檔">
+    在專案根目錄新增 `netlify.toml`：
+
+    ```toml
+    [build]
+      command = "npm run docs:build"
+      publish = "docs/.vitepress/dist"
+
+    [[redirects]]
+      from = "/*"
+      to = "/index.html"
+      status = 200
+    ```
+  </Step>
+  <Step title="連結 GitHub 倉庫">
+    1. 登入 [Netlify](https://app.netlify.com/)
+    2. 點擊 **Add new site → Import an existing project**
+    3. 選擇 **GitHub**，授權並選取你的倉庫
+    4. 建置指令填入 `npm run docs:build`，發布目錄填入 `docs/.vitepress/dist`
+    5. 點擊 **Deploy site**
+  </Step>
+  <Step title="確認部署成功">
+    部署完成後，Netlify 會提供一個 `*.netlify.app` 網址，點擊即可瀏覽你的文件網站。
+  </Step>
+</Steps>
+
+---
+
+## 方法二：部署到 GitHub Pages
+
+### 步驟
+
+<Steps>
+  <Step title="調整 VitePress 基底路徑">
+    在 `docs/.vitepress/config.ts` 加入 `base` 設定（以倉庫名稱為準）：
+
+    ```typescript
+    import { defineConfig } from 'vitepress'
+
+    export default defineConfig({
+      base: '/你的倉庫名稱/',
+      // 其他設定...
+    })
+    ```
+  </Step>
+  <Step title="新增 GitHub Actions 工作流程">
+    在 `.github/workflows/deploy.yml` 新增以下內容：
+
+    ```yaml
+    name: Deploy VitePress to GitHub Pages
+
+    on:
+      push:
+        branches:
+          - main
+
+    jobs:
+      build-and-deploy:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
+
+          - name: Setup Node.js
+            uses: actions/setup-node@v4
+            with:
+              node-version: '20'
+              cache: 'npm'
+
+          - name: Install dependencies
+            run: npm ci
+
+          - name: Build docs
+            run: npm run docs:build
+
+          - name: Deploy to GitHub Pages
+            uses: peaceiris/actions-gh-pages@v3
+            with:
+              github_token: ${{ secrets.GITHUB_TOKEN }}
+              publish_dir: docs/.vitepress/dist
+    ```
+  </Step>
+  <Step title="啟用 GitHub Pages">
+    1. 前往倉庫 **Settings → Pages**
+    2. **Source** 選擇 **Deploy from a branch**
+    3. **Branch** 選擇 `gh-pages`，目錄選 `/ (root)`
+    4. 點擊 **Save**，等待部署完成
+  </Step>
+</Steps>
+
+---
+
+## VSCode 與 Git 文件追蹤注意事項
+
+在 VSCode 中管理含中文檔名的 Markdown 文件時，請注意以下事項：
+
+<AccordionGroup>
+  <Accordion title="確保檔案已加入 Git 追蹤">
+    新建文件後，務必執行以下指令將檔案納入 Git 管理：
+
+    ```bash
+    git add .
+    git commit -m "新增部署教學文件"
+    git push
+    ```
+
+    如僅在本地建立而未提交，VSCode 的 Git 面板會顯示 `File not found` 警告。
+  </Accordion>
+  <Accordion title="中文路徑與 Git 編碼設定">
+    若 Git 顯示中文路徑為亂碼或找不到中文檔名，請在終端機執行：
+
+    ```bash
+    git config --global core.quotepath false
+    ```
+
+    此設定讓 Git 正確顯示 UTF-8 中文路徑，避免路徑編碼問題。
+  </Accordion>
+  <Accordion title="避免誤刪已追蹤的文件">
+    若曾意外刪除已提交的文件，可用以下指令還原：
+
+    ```bash
+    # 查看該文件在哪個 commit 存在
+    git log --all -- vitepress-zh-tw/部署教學-繁體中文.mdx
+
+    # 從指定 commit 還原文件
+    git checkout <commit_id> -- vitepress-zh-tw/部署教學-繁體中文.mdx
+    ```
+  </Accordion>
+  <Accordion title="日常維護建議">
+    - 定期執行 `git status` 確認所有文件均已追蹤
+    - 建議檔名使用 UTF-8 編碼，避免隱藏字元或全形空格
+    - 多人協作時，先 `git pull` 再編輯，避免合併衝突
+    - 可使用 `.gitignore` 排除不需要追蹤的暫存檔案
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 常見問題排查
+
+| 問題 | 可能原因 | 解決方法 |
+|------|----------|----------|
+| `File not found` 警告 | 文件尚未 commit 到 Git | 執行 `git add` 並 commit |
+| `fatal: no such path` | 文件路徑不存在於目標 commit | 確認路徑正確，或從正確 commit 還原 |
+| 中文路徑顯示亂碼 | Git 預設對非 ASCII 路徑進行轉義 | 設定 `core.quotepath false` |
+| 部署後頁面空白 | `base` 路徑設定錯誤 | 確認 `config.ts` 中 `base` 與倉庫名稱一致 |
+| 字型顯示為英文預設字型 | 未載入中文字型 | 在 CSS 中引入 Noto Sans TC 等中文字型 |
+
+---
+
+## 相關資源
+
+- [VitePress 官方文件](https://vitepress.dev/)
+- [Netlify 部署指南](https://docs.netlify.com/)
+- [GitHub Pages 說明](https://docs.github.com/en/pages)
+- [Git 中文路徑設定](https://git-scm.com/docs/git-config#Documentation/git-config.txt-corequotePath)

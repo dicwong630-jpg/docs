@@ -44,6 +44,12 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "繁體中文教學",
+            "pages": [
+              "vitepress-zh-tw/部署教學-繁體中文"
+            ]
           }
         ]
       },
