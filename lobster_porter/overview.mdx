@@ -1,0 +1,72 @@
+---
+title: '龍蝦搬運工 (lobster_porter) 總覽'
+description: '高效靈活的知識與素材批量搬運、分類、插件驅動工具'
+---
+
+# 龍蝦搬運工 (lobster_porter)
+
+`lobster_porter` 是一套針對大型多媒體製作（含電影、動畫、後製專案）設計的**知識與素材批量搬運、自動分類、插件驅動**工具。它讓製作團隊能夠以最低人力成本完成數量龐大的素材管理、歸檔與流程串接。
+
+---
+
+## 核心架構一覽
+
+```
+lobster_porter/
+├── __init__.py          # 套件入口
+├── core.py              # 批量搬運、複製核心引擎
+├── strategies.py        # 分類與標籤策略
+├── plugins/             # 可插拔功能擴充
+│   ├── __init__.py
+│   └── example_plugin.py
+└── cli.py               # 命令列介面
+```
+
+---
+
+## 主要模組說明
+
+<CardGroup cols={2}>
+  <Card title="core — 搬運核心" icon="box">
+    提供批量移動（`batch_move`）、批量複製（`batch_copy`）方法，支援萬用字元、遞迴路徑、衝突處理策略。
+  </Card>
+  <Card title="strategies — 分類策略" icon="filter">
+    可設定依副檔名、日期、關鍵字、正規表達式分類歸檔，一行設定自動分流到對應目錄。
+  </Card>
+  <Card title="plugins — 插件機制" icon="plug">
+    採可插拔架構，每個插件可單獨處理一類素材（如 PDF 解析、DOCX 轉換、圖片縮圖），不影響核心。
+  </Card>
+  <Card title="cli — 命令列介面" icon="terminal">
+    提供基礎命令列操作，可在終端直接執行批量搬運與分類指令，適合腳本自動化。
+  </Card>
+</CardGroup>
+
+---
+
+## 設計理念
+
+- **模組解耦**：核心搬運邏輯與分類策略完全分離，易於維護與測試
+- **插件可插拔**：新增格式支援只需新增插件，不動核心程式碼
+- **CLI 友善**：支援腳本化，可整合至 CI/CD 或製作流程自動化
+- **安全搬運**：設計上避免靜默覆蓋，為撤銷與日誌功能預留架構
+
+---
+
+## 快速開始
+
+```bash
+# 批量移動符合規則的素材
+python -m lobster_porter move ./raw_assets ./sorted_assets --strategy by_extension
+
+# 批量複製並依日期分類
+python -m lobster_porter copy ./dailies ./archive --strategy by_date
+
+# 啟用插件處理 PDF
+python -m lobster_porter move ./docs ./output --plugin pdf_handler
+```
+
+---
+
+<Info>
+目前版本為 **0.9 Beta**。1.0 正式版本仍有若干核心模組待完善，詳見 [開發進度](/lobster_porter/progress)。
+</Info>

@@ -1,0 +1,162 @@
+---
+title: '電影製作支援地圖'
+description: '龍蝦搬運工目前可支援電影製作哪些流程，哪些仍需補完'
+---
+
+# 電影製作支援地圖
+
+本頁說明 `lobster_porter` 目前版本在**電影製作工作流程**各環節的實際支援程度，讓製作團隊在動工前做出準確的工具依賴判斷。
+
+---
+
+## 工作流程支援總覽
+
+```
+開發期 → 前期製作 → 製作期 → 後期製作 → 發行
+  ✅         ✅          ⚠️        ⚠️          ❌
+```
+
+| 工作流程環節 | 支援程度 | 說明 |
+|---|---|---|
+| 劇本管理與版本歸檔 | ✅ 可用 | 批量整理 `.txt`/`.md` 劇本草稿 |
+| 分鏡/故事板素材整理 | ✅ 可用 | 依場景關鍵字分類歸檔 |
+| 製作文件批量分類 | ✅ 可用 | 依副檔名、日期自動分流 |
+| Prompt / AI 生成內容管理 | ✅ 可用 | 批量搬運 AI 美術提示詞與輸出 |
+| 美術設計稿（PSD/CLIP）管理 | ⚠️ 部分 | 搬運可用，格式解析插件未完善 |
+| 劇本 PDF 歸檔與索引 | ⚠️ 部分 | 搬運可用，PDF 內容解析待完善 |
+| 攝製現場素材搬運 | ⚠️ 部分 | 批量複製可用，影音格式支援未完善 |
+| 後製素材（影片/音頻）管理 | ❌ 待開發 | 影音格式插件尚未規劃 |
+| 多人協作與同步 | ❌ 待開發 | 協作同步模組尚未開始 |
+| 全自動流程串接 | ❌ 待開發 | 任務調度大腦尚未實作 |
+
+---
+
+## 可立即使用的部分
+
+<AccordionGroup>
+  <Accordion title="✅ 開發期：劇本、大綱、創作文件管理" defaultOpen>
+    **適用角色：** 編劇、創作監製、製片助理
+
+    龍蝦搬運工現在就能為你做到：
+    - 將各版本劇本（draft_v1.txt、draft_v2.md 等）自動依版本號或日期歸入對應資料夾
+    - 依場景關鍵字（`INT_`、`EXT_`、角色名）自動分流分鏡描述
+    - 批量複製備份，不影響原始創作檔
+    - 快速將不同作者的稿件彙整到統一目錄結構
+
+    ```bash
+    # 範例：整理所有劇本草稿
+    python -m lobster_porter move ./scripts ./archive/scripts --strategy by_date
+
+    # 範例：依場景關鍵字分類分鏡
+    python -m lobster_porter classify ./storyboards ./sorted --strategy by_keyword --keywords "INT,EXT,ACT"
+    ```
+  </Accordion>
+
+  <Accordion title="✅ 前期製作：美術素材、Prompt、設計稿初步整理">
+    **適用角色：** 美術指導、概念設計師、AI 美術製作人
+
+    - 批量整理 AI 生成的 Prompt 文件與對應輸出圖片（搬運部分可用）
+    - 依場景/角色/任務把設計稿分類到對應目錄
+    - `.jpg`/`.png` 圖片的批量搬運（移動/複製）完全可用，但格式解析（縮圖、EXIF 讀取）需等插件完善
+
+    ```bash
+    # 範例：按角色分類所有概念設計稿（圖片搬運）
+    python -m lobster_porter move ./concept_art ./sorted_art --strategy by_keyword --keywords "hero,villain,scene01"
+    ```
+  </Accordion>
+
+  <Accordion title="✅ 製作文件：批量歸檔、備份、版本管理">
+    **適用角色：** 製片、製片助理、技術監製
+
+    - 合約、許可文件、製作報告等 `.txt`/`.md` 格式完整支援
+    - 批量複製所有製作文件作為每日備份
+    - `--dry-run` 模式可預覽搬運結果，不實際移動檔案，確保安全
+
+    ```bash
+    # 範例：每日備份所有製作文件（不刪除原始）
+    python -m lobster_porter copy ./production_docs ./backup/$(date +%Y%m%d)
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 尚需補完的部分
+
+<AccordionGroup>
+  <Accordion title="⚠️ PDF / DOCX 劇本與報告處理（待完善）" icon="triangle-exclamation">
+    **缺口：**
+    - 劇本、製作報告、合約最常用 `.pdf`/`.docx` 格式
+    - 目前可搬運這些檔案，但**無法讀取內容**（例如按場景標題自動分頁、提取角色列表）
+    - PDF 插件骨架已建立，需整合 `pdfplumber` 或 `PyMuPDF`
+    - DOCX 插件需整合 `python-docx`
+
+    **影響範圍：** 無法進行內容感知分類，需手動指定關鍵字
+  </Accordion>
+
+  <Accordion title="⚠️ 影音素材管理（攝製現場 dailies）" icon="triangle-exclamation">
+    **缺口：**
+    - `.mp4`、`.mov`、`.mxf`、`.wav`、`.aiff` 等影音格式插件尚未開發
+    - 目前只能做盲目搬運（不解析媒體元資料）
+    - 無法依 timecode、場記資訊、攝影機 ID 自動分類
+
+    **影響範圍：** 拍攝現場素材整理效率有限，需等 1.2 版本
+  </Accordion>
+
+  <Accordion title="❌ 多人協作與雲端同步（重要缺口）" icon="circle-xmark">
+    **缺口：**
+    - 整個系統目前僅限**單人本機作業**
+    - 大型製作團隊需要同時在不同工作站存取、修改素材
+    - 無衝突偵測、無版本鎖定、無中央授權管理
+
+    **影響範圍：** 若多人同時使用，有覆蓋衝突風險。建議等 1.5 版本。
+  </Accordion>
+
+  <Accordion title="❌ 安全撤銷與完整審計日誌（緊急缺口）" icon="circle-xmark">
+    **缺口：**
+    - 目前沒有可靠的「一鍵復原」功能
+    - 大量搬運操作若有誤，還原成本高
+    - 沒有完整的操作歷程記錄，難以追責和審計
+
+    **建議：** 在撤銷日誌完善前，**務必先手動備份**重要素材，再執行批量操作。
+
+    **預計修復版本：** 1.0（高優先級）
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## 製片視角建議
+
+<Note>
+若你的電影專案目前處於**開發期或前期製作**，龍蝦搬運工現階段工具已能節省大量文件整理時間，可放心使用。
+
+若進入**攝製期或後製期**，建議等待以下模組完成後再全面採用：
+1. **撤銷 / 審計日誌** — 確保誤操作可安全還原
+2. **影音格式支援** — 讓 dailies 管理自動化
+3. **協作同步** — 支援多工作站並發作業
+</Note>
+
+---
+
+## 當前「以輕駕重」最佳實踐
+
+即便功能尚未完整，以下工作流程可在你的電腦上今天就開始運行：
+
+1. **每日 Prompt 文件歸檔**  
+   `batch_copy` 將當天 AI Prompt 輸出備份至日期資料夾
+
+2. **劇本版本管理**  
+   `batch_move` + `by_date` 策略自動歸入 `scripts/YYYYMMDD/`
+
+3. **分鏡圖片批量整理**  
+   `batch_move` + `by_keyword` 將 `scene01_xxx.jpg` 自動移入 `storyboards/scene01/`
+
+4. **製作文件週報備份**  
+   `--dry-run` 先確認，再 `batch_copy` 執行實際備份
+
+---
+
+<Card title="查看完整開發進度" icon="list-check" href="/lobster_porter/progress">
+  了解每個模組的詳細開發狀態、版本路線圖與優先補完建議
+</Card>
