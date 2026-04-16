@@ -2,6 +2,7 @@
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Mint Starter Kit",
+  "locale": "zh-Hant",
   "colors": {
     "primary": "#16A34A",
     "light": "#07C983",
@@ -35,6 +36,12 @@
               "essentials/code",
               "essentials/images",
               "essentials/reusable-snippets"
+            ]
+          },
+          {
+            "group": "專案說明",
+            "pages": [
+              "essentials/github-metrics"
             ]
           },
           {
@@ -109,7 +116,8 @@
      "perplexity",
      "mcp",
      "cursor",
-     "vscode"
+     "vscode",
+     "translate"
    ]
   },
   "footer": {
