@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "lobster_porter"
+version = "1.0.0"
+description = "🦞 LobsterPorter — 批量檔案搬運、分類、刪除與重命名工具"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["file", "batch", "copy", "move", "delete", "rename", "organise", "sort"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Filesystems",
+    "Topic :: Utilities",
+]
+dependencies = []  # No required external dependencies — stdlib only
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+]
+
+[project.scripts]
+lobster-porter = "lobster_porter.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/dicwong630-jpg/docs"
+Repository = "https://github.com/dicwong630-jpg/docs"
+
+[tool.setuptools.packages.find]
+include = ["lobster_porter*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
