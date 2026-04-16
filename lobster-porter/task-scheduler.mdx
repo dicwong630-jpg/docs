@@ -1,0 +1,197 @@
+---
+title: "任務調度大腦"
+description: "為 lobster_porter 加入可編排批次流程、策略分流與統一監控的中樞控制器落地策略"
+icon: "brain"
+---
+
+## 功能目標
+
+建立一個任務調度中樞，讓使用者可以：
+
+- 定義多步驟批次工作流（如「先分類 → 再搬運 → 完成後通知」）
+- 設定觸發條件（手動、定時、事件驅動）
+- 即時監控每個任務的執行狀態
+- 在任務失敗時自動重試或切換備用策略
+
+## 推薦落地策略
+
+### 1. 任務佇列（Task Queue）
+
+以輕量佇列儲存待執行任務，支援優先級排序與依賴鏈定義。
+
+```python
+# scheduler/task_queue.py（新增模組）
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Callable, Any
+import uuid
+
+class TaskStatus(Enum):
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCESS = "success"
+    FAILED = "failed"
+    RETRYING = "retrying"
+
+@dataclass
+class Task:
+    name: str
+    func: Callable[..., Any]
+    args: tuple = field(default_factory=tuple)
+    kwargs: dict = field(default_factory=dict)
+    priority: int = 0
+    max_retries: int = 3
+    depends_on: list[str] = field(default_factory=list)
+    task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    status: TaskStatus = TaskStatus.PENDING
+    retry_count: int = 0
+    result: Any = None
+    error: Exception | None = None
+```
+
+### 2. 主控制器（Controller）
+
+負責從佇列取出任務、按依賴順序執行、處理重試邏輯，並廣播狀態更新事件。
+
+```python
+# scheduler/controller.py（新增模組）
+import threading
+import time
+from .task_queue import Task, TaskStatus
+
+class SchedulerController:
+    def __init__(self, max_workers: int = 4):
+        self._queue: list[Task] = []
+        self._completed: dict[str, Task] = {}
+        self._lock = threading.Lock()
+        self._max_workers = max_workers
+        self._running = False
+
+    def submit(self, task: Task):
+        with self._lock:
+            self._queue.append(task)
+            self._queue.sort(key=lambda t: -t.priority)
+
+    def _can_run(self, task: Task) -> bool:
+        return all(
+            dep in self._completed and
+            self._completed[dep].status == TaskStatus.SUCCESS
+            for dep in task.depends_on
+        )
+
+    def _execute(self, task: Task):
+        task.status = TaskStatus.RUNNING
+        try:
+            task.result = task.func(*task.args, **task.kwargs)
+            task.status = TaskStatus.SUCCESS
+        except Exception as exc:
+            task.error = exc
+            if task.retry_count < task.max_retries:
+                task.retry_count += 1
+                task.status = TaskStatus.RETRYING
+                time.sleep(2 ** task.retry_count)  # 指數退避
+                self._execute(task)
+            else:
+                task.status = TaskStatus.FAILED
+
+    def run(self):
+        self._running = True
+        while self._running:
+            with self._lock:
+                ready = [t for t in self._queue if self._can_run(t)]
+            threads = []
+            for task in ready[:self._max_workers]:
+                t = threading.Thread(target=self._execute, args=(task,))
+                threads.append(t)
+                t.start()
+                with self._lock:
+                    self._queue.remove(task)
+            for t in threads:
+                t.join()
+            if not self._queue:
+                self._running = False
+
+    def stop(self):
+        self._running = False
+```
+
+### 3. 策略分流（Strategy Router）
+
+依據素材類型或路由規則，自動選擇不同搬運策略。
+
+```python
+# scheduler/strategy.py（新增模組）
+from typing import Callable
+import re
+
+StrategyFn = Callable[[str], None]
+
+class StrategyRouter:
+    def __init__(self):
+        self._rules: list[tuple[str, StrategyFn]] = []
+
+    def register(self, pattern: str, strategy: StrategyFn):
+        """以正則表達式 pattern 匹配檔名，對應執行 strategy。"""
+        self._rules.append((pattern, strategy))
+
+    def route(self, file_path: str) -> StrategyFn | None:
+        for pattern, strategy in self._rules:
+            if re.search(pattern, file_path, re.IGNORECASE):
+                return strategy
+        return None
+```
+
+## 使用範例
+
+```python
+from lobster_porter.scheduler.controller import SchedulerController
+from lobster_porter.scheduler.task_queue import Task
+from lobster_porter.core.porter import Porter
+
+controller = SchedulerController(max_workers=2)
+
+# 步驟一：分類任務
+classify_task = Task(
+    name="classify_assets",
+    func=Porter.classify,
+    args=("/raw_assets",),
+    priority=10,
+)
+
+# 步驟二：搬運任務（依賴分類完成）
+move_task = Task(
+    name="move_assets",
+    func=Porter.move,
+    args=("/raw_assets", "/organized"),
+    priority=5,
+    depends_on=["classify_assets"],
+)
+
+controller.submit(classify_task)
+controller.submit(move_task)
+controller.run()
+```
+
+## 需調整的核心檔案
+
+<AccordionGroup>
+  <Accordion icon="file-code" title="core/porter.py">
+    將現有的搬運/分類函式包裝成可被 `Task` 直接呼叫的純函式介面，
+    移除 `porter.py` 內的直接阻塞式迴圈。
+  </Accordion>
+  <Accordion icon="file-code" title="main.py">
+    將入口點改為初始化 `SchedulerController` 並提交任務，
+    取代原有的直接呼叫方式。
+  </Accordion>
+  <Accordion icon="folder-plus" title="scheduler/（新增目錄）">
+    新建以下三個模組：
+    - `task_queue.py`（任務資料模型）
+    - `controller.py`（排程與執行引擎）
+    - `strategy.py`（策略路由器）
+  </Accordion>
+</AccordionGroup>
+
+<Tip>
+  如果日後任務量大幅增加，可考慮將 `SchedulerController` 的佇列後端替換為
+  [Celery](https://docs.celeryq.dev/) + Redis，無需大幅改動上層 API。
+</Tip>

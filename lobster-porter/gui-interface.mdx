@@ -1,0 +1,252 @@
+---
+title: "GUI 設定介面"
+description: "為 lobster_porter 加入視覺化參數設置與操作進度展示的落地策略"
+icon: "display"
+---
+
+## 功能目標
+
+提供一個獨立的圖形化介面，讓使用者可以：
+
+- 透過視覺化表單設定搬運路徑、分類規則、插件選項等參數
+- 即時查看任務執行進度與狀態
+- 不需要編輯設定檔或執行命令列即可完成常見操作
+
+## 推薦落地策略
+
+使用 Python 內建的 **`tkinter`** 作為初版 GUI 框架，無需額外安裝即可使用，後期可選擇性遷移至 PyQt6 或 Electron（透過 Python + FastAPI 後端）。
+
+### 目錄結構
+
+```
+gui/
+├── app.py              # 主視窗入口
+├── settings_panel.py   # 參數設定面板
+└── progress_view.py    # 任務進度展示元件
+```
+
+### 1. 主視窗（app.py）
+
+```python
+# gui/app.py（新增模組）
+import tkinter as tk
+from tkinter import ttk
+from .settings_panel import SettingsPanel
+from .progress_view import ProgressView
+
+class LobsterPorterApp(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Lobster Porter — 龍蝦搬運工")
+        self.geometry("860x600")
+        self.resizable(True, True)
+
+        # 頂部標籤頁切換
+        notebook = ttk.Notebook(self)
+        notebook.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.settings = SettingsPanel(notebook)
+        self.progress = ProgressView(notebook)
+
+        notebook.add(self.settings, text="⚙️  設定")
+        notebook.add(self.progress, text="📋  任務進度")
+
+        # 底部操作列
+        bar = tk.Frame(self, bd=1, relief="sunken")
+        bar.pack(fill="x", side="bottom")
+        tk.Button(bar, text="▶  開始執行", command=self._run).pack(side="right", padx=8, pady=4)
+        tk.Button(bar, text="■  停止", command=self._stop).pack(side="right", padx=4, pady=4)
+
+    def _run(self):
+        config = self.settings.get_config()
+        self.progress.start(config)
+
+    def _stop(self):
+        self.progress.stop()
+
+if __name__ == "__main__":
+    app = LobsterPorterApp()
+    app.mainloop()
+```
+
+### 2. 設定面板（settings_panel.py）
+
+```python
+# gui/settings_panel.py（新增模組）
+import tkinter as tk
+from tkinter import ttk, filedialog
+
+class SettingsPanel(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent, padx=16, pady=16)
+        self._build()
+
+    def _build(self):
+        # 來源目錄
+        tk.Label(self, text="來源目錄", anchor="w").grid(row=0, column=0, sticky="w", pady=4)
+        self._src = tk.StringVar()
+        tk.Entry(self, textvariable=self._src, width=50).grid(row=0, column=1, padx=8)
+        tk.Button(self, text="瀏覽…", command=self._pick_src).grid(row=0, column=2)
+
+        # 目標目錄
+        tk.Label(self, text="目標目錄", anchor="w").grid(row=1, column=0, sticky="w", pady=4)
+        self._dst = tk.StringVar()
+        tk.Entry(self, textvariable=self._dst, width=50).grid(row=1, column=1, padx=8)
+        tk.Button(self, text="瀏覽…", command=self._pick_dst).grid(row=1, column=2)
+
+        # 分類策略
+        tk.Label(self, text="分類策略", anchor="w").grid(row=2, column=0, sticky="w", pady=4)
+        self._strategy = ttk.Combobox(
+            self,
+            values=["依場景", "依角色", "依檔案類型", "自訂規則"],
+            state="readonly",
+            width=20,
+        )
+        self._strategy.set("依場景")
+        self._strategy.grid(row=2, column=1, sticky="w", padx=8)
+
+        # 雲端同步開關
+        self._sync = tk.BooleanVar(value=False)
+        tk.Checkbutton(self, text="啟用雲端同步", variable=self._sync).grid(
+            row=3, column=1, sticky="w", padx=8, pady=8
+        )
+
+        # 最大並發數
+        tk.Label(self, text="最大並發任務數", anchor="w").grid(row=4, column=0, sticky="w", pady=4)
+        self._workers = tk.IntVar(value=4)
+        tk.Spinbox(self, from_=1, to=16, textvariable=self._workers, width=5).grid(
+            row=4, column=1, sticky="w", padx=8
+        )
+
+    def _pick_src(self):
+        d = filedialog.askdirectory()
+        if d:
+            self._src.set(d)
+
+    def _pick_dst(self):
+        d = filedialog.askdirectory()
+        if d:
+            self._dst.set(d)
+
+    def get_config(self) -> dict:
+        return {
+            "source": self._src.get(),
+            "destination": self._dst.get(),
+            "strategy": self._strategy.get(),
+            "sync_enabled": self._sync.get(),
+            "max_workers": self._workers.get(),
+        }
+```
+
+### 3. 任務進度視圖（progress_view.py）
+
+```python
+# gui/progress_view.py（新增模組）
+import tkinter as tk
+from tkinter import ttk
+import threading
+
+class ProgressView(tk.Frame):
+    def __init__(self, parent):
+        super().__init__(parent, padx=16, pady=16)
+        self._build()
+        self._thread: threading.Thread | None = None
+
+    def _build(self):
+        # 整體進度條
+        tk.Label(self, text="整體進度", anchor="w").pack(fill="x")
+        self._bar = ttk.Progressbar(self, length=600, mode="determinate")
+        self._bar.pack(fill="x", pady=4)
+        self._pct = tk.Label(self, text="0%", anchor="e")
+        self._pct.pack(fill="x")
+
+        # 任務清單
+        tk.Label(self, text="任務清單", anchor="w").pack(fill="x", pady=(12, 0))
+        cols = ("任務名稱", "狀態", "來源", "目標")
+        self._tree = ttk.Treeview(self, columns=cols, show="headings", height=12)
+        for col in cols:
+            self._tree.heading(col, text=col)
+            self._tree.column(col, width=160)
+        self._tree.pack(fill="both", expand=True)
+
+        # 狀態列
+        self._status = tk.Label(self, text="就緒", fg="gray", anchor="w")
+        self._status.pack(fill="x", pady=4)
+
+    def update_progress(self, value: int, status: str = ""):
+        self._bar["value"] = value
+        self._pct.config(text=f"{value}%")
+        if status:
+            self._status.config(text=status, fg="black")
+
+    def add_task_row(self, name: str, status: str, source: str, dest: str):
+        tag = "ok" if status == "完成" else ("err" if status == "失敗" else "")
+        self._tree.insert("", "end", values=(name, status, source, dest), tags=(tag,))
+        self._tree.tag_configure("ok", foreground="green")
+        self._tree.tag_configure("err", foreground="red")
+
+    def start(self, config: dict):
+        self._status.config(text="執行中…", fg="blue")
+        # 在背景執行緒啟動 SchedulerController，避免凍結 UI
+        from lobster_porter.scheduler.controller import SchedulerController
+        self._thread = threading.Thread(
+            target=self._run_worker, args=(config,), daemon=True
+        )
+        self._thread.start()
+
+    def _run_worker(self, config: dict):
+        # 此處呼叫實際的搬運邏輯，定期更新進度
+        self.update_progress(0, "啟動任務…")
+        # TODO: 與 SchedulerController 整合後，在此訂閱任務狀態事件
+        self.update_progress(100, "全部完成")
+
+    def stop(self):
+        # TODO: 向 SchedulerController 發送停止訊號
+        self._status.config(text="已停止", fg="orange")
+```
+
+## 執行方式
+
+```bash
+# 直接從命令列啟動 GUI
+python -m lobster_porter.gui.app
+```
+
+## 需調整的核心檔案
+
+<AccordionGroup>
+  <Accordion icon="file-code" title="main.py">
+    加入 `--gui` 旗標支援：使用者可選擇以 CLI 或 GUI 模式啟動。
+
+    ```python
+    import argparse
+    from lobster_porter.gui.app import LobsterPorterApp
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--gui", action="store_true", help="以 GUI 模式啟動")
+    args = parser.parse_args()
+
+    if args.gui:
+        app = LobsterPorterApp()
+        app.mainloop()
+    else:
+        # 既有 CLI 流程
+        ...
+    ```
+  </Accordion>
+  <Accordion icon="folder-plus" title="gui/（新增目錄）">
+    - `app.py`（主視窗與標籤頁）
+    - `settings_panel.py`（參數設定面板）
+    - `progress_view.py`（任務進度元件）
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+  `tkinter` 已內建於 Python 3.x，無需額外安裝依賴。若未來需要更精美的 UI，
+  可考慮使用 [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) 作為直接替換。
+</Note>
+
+<Tip>
+  為避免 GUI 在任務執行期間凍結，所有耗時操作都應在 `daemon=True` 的背景執行緒中進行，
+  並透過 `after()` 方法回到主執行緒更新 UI 元件。
+</Tip>

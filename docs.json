@@ -44,6 +44,16 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "Lobster Porter",
+            "pages": [
+              "lobster-porter/overview",
+              "lobster-porter/collaborative-sync",
+              "lobster-porter/task-scheduler",
+              "lobster-porter/error-tracking",
+              "lobster-porter/gui-interface"
+            ]
           }
         ]
       },

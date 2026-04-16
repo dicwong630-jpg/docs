@@ -1,0 +1,71 @@
+---
+title: "Lobster Porter 概覽"
+description: "lobster_porter 模組架構、現狀與四大待開發功能導航"
+icon: "lobster"
+---
+
+`lobster_porter`（龍蝦搬運工）是一套本地端素材批量搬運與自動整理工具，主要服務於電影製作、AI 創作等需要大量檔案管理的工作流程。
+
+## 已完成功能
+
+<CardGroup cols={2}>
+  <Card title="批量搬運" icon="boxes-stacked">
+    支援 txt、md 等格式的批量移動、複製與重命名。
+  </Card>
+  <Card title="自動分類" icon="folder-tree">
+    依場景、角色、任務類型等規則自動歸類素材。
+  </Card>
+  <Card title="插件系統" icon="plug">
+    可擴充自訂分類策略與搬運規則，彈性適應不同製作流程。
+  </Card>
+  <Card title="基礎日誌" icon="scroll">
+    記錄每次搬運操作的基本資訊與結果。
+  </Card>
+</CardGroup>
+
+## 四大待開發功能
+
+下列功能是 `lobster_porter` 走向成熟的下一階段重點。點擊各卡片查看落地策略與實作建議。
+
+<CardGroup cols={2}>
+  <Card title="協作同步" icon="arrows-rotate" href="/lobster-porter/collaborative-sync">
+    多人協作與雲端同步能力，包含檔案鎖定與衝突解決機制。
+  </Card>
+  <Card title="任務調度大腦" icon="brain" href="/lobster-porter/task-scheduler">
+    可編排批次流程、策略分流與統一監控各任務狀態的中樞控制器。
+  </Card>
+  <Card title="完整錯誤追蹤" icon="bug" href="/lobster-porter/error-tracking">
+    全域異常處理、結構化操作日誌與錯誤報告機制。
+  </Card>
+  <Card title="GUI 設定介面" icon="display" href="/lobster-porter/gui-interface">
+    視覺化參數設置、操作進度展示與即時狀態回饋。
+  </Card>
+</CardGroup>
+
+## 模組目錄結構（建議）
+
+```
+lobster_porter/
+├── core/
+│   ├── porter.py          # 核心搬運邏輯
+│   ├── classifier.py      # 分類策略
+│   └── logger.py          # 日誌系統（待強化）
+├── plugins/               # 自訂插件目錄
+├── scheduler/             # 【新增】任務調度大腦
+│   ├── controller.py
+│   ├── task_queue.py
+│   └── strategy.py
+├── sync/                  # 【新增】協作同步模組
+│   ├── lock_manager.py
+│   ├── cloud_adapter.py
+│   └── conflict_resolver.py
+├── tracking/              # 【新增】錯誤追蹤模組
+│   ├── error_handler.py
+│   ├── audit_log.py
+│   └── reporter.py
+├── gui/                   # 【新增】GUI 設定介面
+│   ├── app.py
+│   ├── settings_panel.py
+│   └── progress_view.py
+└── main.py
+```

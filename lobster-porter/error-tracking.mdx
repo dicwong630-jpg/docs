@@ -1,0 +1,199 @@
+---
+title: "完整錯誤追蹤"
+description: "為 lobster_porter 加入全域異常處理、結構化操作日誌與錯誤報告的落地策略"
+icon: "bug"
+---
+
+## 功能目標
+
+在 `lobster_porter` 的任何執行環節出現錯誤時，能夠：
+
+- 自動捕獲並分類異常，而非讓程式靜默失敗
+- 輸出結構化的操作日誌，便於人工審查與自動分析
+- 生成可讀的錯誤報告，包含錯誤上下文與建議修復方向
+- 支援日誌持久化（本地檔案 / 遠端收集）
+
+## 推薦落地策略
+
+### 1. 全域異常處理器（Global Error Handler）
+
+在程式入口層安裝統一的異常攔截，確保所有未預期錯誤都被記錄而非悄悄消失。
+
+```python
+# tracking/error_handler.py（新增模組）
+import sys
+import traceback
+import logging
+from typing import Type
+
+logger = logging.getLogger("lobster_porter")
+
+class LobsterError(Exception):
+    """lobster_porter 的基礎異常類別。"""
+    def __init__(self, message: str, context: dict | None = None):
+        super().__init__(message)
+        self.context = context or {}
+
+class PorterIOError(LobsterError):
+    """檔案讀寫失敗。"""
+
+class ClassifierError(LobsterError):
+    """分類規則執行失敗。"""
+
+class SyncConflictError(LobsterError):
+    """協作同步發生衝突。"""
+
+def global_exception_handler(
+    exc_type: Type[BaseException],
+    exc_value: BaseException,
+    exc_tb,
+):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_tb)
+        return
+    logger.critical(
+        "Unhandled exception",
+        exc_info=(exc_type, exc_value, exc_tb),
+        extra={"context": getattr(exc_value, "context", {})},
+    )
+
+# 在 main.py 頂部呼叫一次以啟用
+sys.excepthook = global_exception_handler
+```
+
+### 2. 結構化操作日誌（Structured Audit Log）
+
+以 JSON 格式記錄每次操作，包含時間戳、使用者、動作類型、受影響路徑與結果，便於後續查詢與統計。
+
+```python
+# tracking/audit_log.py（新增模組）
+import json
+import logging
+from datetime import datetime, timezone
+from pathlib import Path
+
+class AuditLogger:
+    def __init__(self, log_path: str = "logs/audit.jsonl"):
+        Path(log_path).parent.mkdir(parents=True, exist_ok=True)
+        self._path = log_path
+
+    def log(
+        self,
+        action: str,
+        source: str,
+        destination: str | None = None,
+        user: str = "local",
+        status: str = "success",
+        error: str | None = None,
+        metadata: dict | None = None,
+    ):
+        entry = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "user": user,
+            "action": action,
+            "source": source,
+            "destination": destination,
+            "status": status,
+            "error": error,
+            "metadata": metadata or {},
+        }
+        with open(self._path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+```
+
+日誌格式範例（`.jsonl`）：
+
+```json
+{"timestamp":"2026-04-16T10:00:00+00:00","user":"dicwong","action":"move","source":"/raw/scene01.txt","destination":"/scenes/scene01.txt","status":"success","error":null,"metadata":{"size_bytes":2048}}
+{"timestamp":"2026-04-16T10:00:05+00:00","user":"dicwong","action":"classify","source":"/raw/bg_01.png","destination":null,"status":"failed","error":"ClassifierError: no matching rule","metadata":{}}
+```
+
+### 3. 錯誤報告產生器（Error Reporter）
+
+彙整一段時間內的失敗操作，產生易讀的 Markdown 報告。
+
+```python
+# tracking/reporter.py（新增模組）
+import json
+from pathlib import Path
+from datetime import datetime, timezone
+
+class ErrorReporter:
+    def __init__(self, log_path: str = "logs/audit.jsonl"):
+        self._log_path = log_path
+
+    def generate(self, output_path: str = "logs/error_report.md") -> str:
+        failures = []
+        with open(self._log_path, "r", encoding="utf-8") as f:
+            for line in f:
+                entry = json.loads(line)
+                if entry.get("status") == "failed":
+                    failures.append(entry)
+
+        lines = [
+            f"# lobster_porter 錯誤報告",
+            f"產生時間：{datetime.now(timezone.utc).isoformat()}",
+            f"失敗操作數量：{len(failures)}",
+            "",
+            "| 時間 | 使用者 | 動作 | 來源 | 錯誤訊息 |",
+            "|------|--------|------|------|---------|",
+        ]
+        for f in failures:
+            lines.append(
+                f"| {f['timestamp']} | {f['user']} | {f['action']} "
+                f"| `{f['source']}` | {f['error']} |"
+            )
+
+        report = "\n".join(lines)
+        Path(output_path).write_text(report, encoding="utf-8")
+        return report
+```
+
+## 日誌等級配置建議
+
+```python
+# core/logger.py（更新現有模組）
+import logging
+import sys
+
+def setup_logging(level: str = "INFO", log_file: str | None = "logs/porter.log"):
+    handlers = [logging.StreamHandler(sys.stdout)]
+    if log_file:
+        from logging.handlers import RotatingFileHandler
+        handlers.append(
+            RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=3)
+        )
+    logging.basicConfig(
+        level=getattr(logging, level.upper(), logging.INFO),
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=handlers,
+    )
+```
+
+## 需調整的核心檔案
+
+<AccordionGroup>
+  <Accordion icon="file-code" title="core/porter.py">
+    - 所有 `try/except` 改為拋出 `PorterIOError` 等具名異常，不吞掉錯誤
+    - 每次操作後呼叫 `AuditLogger.log()` 記錄結果
+  </Accordion>
+  <Accordion icon="file-code" title="core/classifier.py">
+    - 規則匹配失敗時拋出 `ClassifierError`，附帶 `context`（失敗的規則名稱、輸入路徑）
+  </Accordion>
+  <Accordion icon="file-code" title="core/logger.py">
+    - 以 `setup_logging()` 統一初始化，支援 rotating file handler
+  </Accordion>
+  <Accordion icon="file-code" title="main.py">
+    - 頂部安裝 `global_exception_handler`
+    - 程式結束前呼叫 `ErrorReporter.generate()` 輸出報告
+  </Accordion>
+  <Accordion icon="folder-plus" title="tracking/（新增目錄）">
+    - `error_handler.py`（全域攔截與自訂異常階層）
+    - `audit_log.py`（JSONL 結構化日誌）
+    - `reporter.py`（Markdown 報告產生器）
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+  請確保 `logs/` 目錄已加入 `.gitignore`，避免將敏感操作日誌提交至版本控制。
+</Warning>

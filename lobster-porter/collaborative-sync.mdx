@@ -1,0 +1,140 @@
+---
+title: "協作同步"
+description: "為 lobster_porter 加入多人協作與雲端同步能力的落地策略與實作建議"
+icon: "arrows-rotate"
+---
+
+## 功能目標
+
+讓多位團隊成員（本地或遠端）能夠同時安全地使用 `lobster_porter` 搬運和管理素材，避免衝突並保持資料一致性。
+
+## 推薦落地策略
+
+### 1. 檔案鎖定機制（File Locking）
+
+在同一批次任務進行時，對目標目錄加上鎖定標記，防止其他使用者同時寫入同一位置。
+
+```python
+# sync/lock_manager.py（新增模組）
+import fcntl
+import os
+
+class LockManager:
+    def __init__(self, lock_dir: str):
+        self.lock_dir = lock_dir
+        self._locks: dict[str, "IO"] = {}
+
+    def acquire(self, resource_id: str) -> bool:
+        lock_path = os.path.join(self.lock_dir, f"{resource_id}.lock")
+        fd = open(lock_path, "w")
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self._locks[resource_id] = fd
+            return True
+        except OSError:
+            fd.close()
+            return False
+
+    def release(self, resource_id: str):
+        fd = self._locks.pop(resource_id, None)
+        if fd:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            fd.close()
+```
+
+### 2. 雲端儲存介面卡（Cloud Storage Adapter）
+
+透過統一介面支援多種雲端後端（Google Drive、S3、OneDrive 等），讓搬運操作可選擇性地同步至雲端。
+
+```python
+# sync/cloud_adapter.py（新增模組）
+from abc import ABC, abstractmethod
+
+class CloudAdapter(ABC):
+    @abstractmethod
+    def upload(self, local_path: str, remote_path: str) -> bool: ...
+
+    @abstractmethod
+    def download(self, remote_path: str, local_path: str) -> bool: ...
+
+    @abstractmethod
+    def list_files(self, remote_dir: str) -> list[str]: ...
+
+class S3Adapter(CloudAdapter):
+    def __init__(self, bucket: str, region: str):
+        import boto3
+        self.client = boto3.client("s3", region_name=region)
+        self.bucket = bucket
+
+    def upload(self, local_path: str, remote_path: str) -> bool:
+        self.client.upload_file(local_path, self.bucket, remote_path)
+        return True
+
+    # download / list_files 實作略
+```
+
+### 3. 衝突偵測與解決（Conflict Resolution）
+
+當兩個使用者對同一檔案進行操作時，自動偵測衝突並提供三種解決策略：
+
+| 策略 | 說明 |
+|------|------|
+| `keep_local` | 保留本地版本，丟棄遠端變更 |
+| `keep_remote` | 採用遠端版本，覆蓋本地 |
+| `keep_both` | 兩個版本均保留，以時間戳重命名 |
+
+```python
+# sync/conflict_resolver.py（新增模組）
+from enum import Enum
+from datetime import datetime
+
+class ConflictStrategy(Enum):
+    KEEP_LOCAL = "keep_local"
+    KEEP_REMOTE = "keep_remote"
+    KEEP_BOTH = "keep_both"
+
+class ConflictResolver:
+    def __init__(self, strategy: ConflictStrategy = ConflictStrategy.KEEP_BOTH):
+        self.strategy = strategy
+
+    def resolve(self, local_path: str, remote_path: str) -> str:
+        if self.strategy == ConflictStrategy.KEEP_BOTH:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            new_path = f"{local_path}.conflict_{timestamp}"
+            return new_path
+        elif self.strategy == ConflictStrategy.KEEP_REMOTE:
+            return remote_path
+        return local_path
+```
+
+## 需調整的核心檔案
+
+<AccordionGroup>
+  <Accordion icon="file-code" title="core/porter.py">
+    - 搬運前呼叫 `LockManager.acquire()`，搬運後呼叫 `release()`
+    - 加入 `sync_enabled` 旗標，決定是否觸發雲端上傳
+  </Accordion>
+  <Accordion icon="file-code" title="core/logger.py">
+    - 日誌加入 `user_id` 與 `session_id` 欄位，支援多人作業追蹤
+  </Accordion>
+  <Accordion icon="folder-plus" title="sync/（新增目錄）">
+    新建以下三個模組：
+    - `lock_manager.py`
+    - `cloud_adapter.py`（含各雲端後端的子類別）
+    - `conflict_resolver.py`
+  </Accordion>
+</AccordionGroup>
+
+## 建議的依賴套件
+
+```bash
+# 雲端後端（依需求擇一安裝）
+pip install boto3          # AWS S3
+pip install google-cloud-storage  # Google Cloud Storage
+pip install azure-storage-blob    # Azure Blob Storage
+```
+
+<Note>
+  若初期只需要局域網路內的多人協作，可先採用共享網路磁碟（NFS/SMB）搭配檔案鎖定，
+  不需要立即引入雲端 SDK，降低初始複雜度。
+</Note>
