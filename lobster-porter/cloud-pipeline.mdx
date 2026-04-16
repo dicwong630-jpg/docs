@@ -1,0 +1,206 @@
+---
+title: "雲端流水線設置"
+description: "Google Colab 與 HuggingFace Spaces 完整設置教學，零本地安裝快速上手"
+icon: "cloud"
+---
+
+## 選擇雲端平台
+
+| 平台 | 適合 | 免費額度 | GPU |
+|------|------|----------|-----|
+| **Google Colab** | 執行腳本、原型驗證 | 有限（每日約數小時） | T4 GPU |
+| **HuggingFace Spaces** | 發佈互動 Demo App | 永久免費（CPU） | 付費可升級 |
+| **GitHub Actions** | 自動化 CI/CD 流程 | 每月 2,000 分鐘 | 無（僅 CPU） |
+
+**建議組合**：Colab（執行生成任務）+ GitHub（存放腳本/劇本）+ Spaces（展示成果）
+
+---
+
+## 方案一：Google Colab 快速起步
+
+### 步驟 1：開啟 Colab Notebook
+
+前往 [colab.research.google.com](https://colab.research.google.com)，新增一個 Notebook。
+
+### 步驟 2：掛載 GitHub Repo
+
+```python
+# 克隆你的 GitHub Repo（替換為你的倉庫網址）
+!git clone https://github.com/dicwong630-jpg/docs.git
+%cd docs
+```
+
+### 步驟 3：安裝依賴
+
+```python
+!pip install -q edge-tts openai pyyaml python-dotenv moviepy
+!apt-get install -y ffmpeg -q
+```
+
+### 步驟 4：設定 API 金鑰（使用 Colab Secrets）
+
+在 Colab 左側選單點擊「🔑 Secrets」，新增以下金鑰：
+
+- `OPENAI_API_KEY`
+- `STABILITY_API_KEY`（如使用 Stable Diffusion API）
+
+在 Notebook 中讀取：
+
+```python
+from google.colab import userdata
+import os
+
+os.environ["OPENAI_API_KEY"] = userdata.get("OPENAI_API_KEY")
+```
+
+### 步驟 5：執行主流水線
+
+```python
+# 執行完整流水線
+!python scripts/main_pipeline.py
+```
+
+### 步驟 6：下載成品影片
+
+```python
+from google.colab import files
+files.download("data/output/final_video.mp4")
+```
+
+---
+
+## 方案二：HuggingFace Spaces 互動 Demo
+
+HuggingFace Spaces 適合建立一個**讓任何人都能操作的網頁介面**，輸入教學主題即可自動生成視頻。
+
+### 步驟 1：建立 Space
+
+1. 前往 [huggingface.co/spaces](https://huggingface.co/spaces)
+2. 點擊 **Create new Space**
+3. 選擇 **Gradio** 作為 SDK
+4. 設定可見性為 **Public**
+
+### 步驟 2：新增 `app.py`
+
+```python
+import gradio as gr
+import edge_tts
+import asyncio
+import os
+
+async def generate_audio(text: str, voice: str = "zh-HK-HiuMaanNeural") -> str:
+    """使用 Edge-TTS 將文字轉語音"""
+    output_path = "/tmp/output.mp3"
+    communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(output_path)
+    return output_path
+
+def tts_interface(text: str, voice: str) -> str:
+    audio_path = asyncio.run(generate_audio(text, voice))
+    return audio_path
+
+demo = gr.Interface(
+    fn=tts_interface,
+    inputs=[
+        gr.Textbox(label="輸入教學文字", placeholder="例如：今日我哋學習粵語發音..."),
+        gr.Dropdown(
+            choices=["zh-HK-HiuMaanNeural", "zh-HK-WanLungNeural"],
+            value="zh-HK-HiuMaanNeural",
+            label="選擇聲線"
+        )
+    ],
+    outputs=gr.Audio(label="生成語音"),
+    title="龍蝦搬運工 - TTS 語音生成 Demo",
+    description="輸入粵語教學文字，即時生成語音示範"
+)
+
+demo.launch()
+```
+
+### 步驟 3：新增 `requirements.txt`
+
+```text
+edge-tts
+gradio
+```
+
+### 步驟 4：推送至 HuggingFace Spaces
+
+```bash
+# 在本地 clone 你的 Space Repo
+git clone https://huggingface.co/spaces/YOUR_USERNAME/lobster-porter-demo
+cd lobster-porter-demo
+
+# 複製 app.py 和 requirements.txt，然後推送
+git add .
+git commit -m "Add TTS demo app"
+git push
+```
+
+---
+
+## 方案三：GitHub Actions 自動化排程
+
+將流水線腳本設為每週自動執行，生成新一期教學視頻素材。
+
+新增 `.github/workflows/weekly_pipeline.yml`：
+
+```yaml
+name: Weekly Video Pipeline
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'   # 每週一凌晨 2 時執行
+  workflow_dispatch:        # 支援手動觸發
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python scripts/main_pipeline.py
+
+      - name: Upload output video
+        uses: actions/upload-artifact@v4
+        with:
+          name: output-video
+          path: data/output/*.mp4
+```
+
+<Warning>
+  GitHub Actions 的免費版 runner 沒有 GPU，不適合在 Actions 中執行 Stable Diffusion 本地模型。圖像生成請改用 DALL·E 3 或 Replicate API（按次計費）。
+</Warning>
+
+---
+
+## 最快成品落地路線（5 步）
+
+<Steps>
+  <Step title="Fork 或 Clone Repo">
+    到 `dicwong630-jpg/docs` 點擊 Fork，或在 Colab 執行 `!git clone`。
+  </Step>
+  <Step title="在 Colab 開啟主 Notebook">
+    上傳或在 Colab 新建 Notebook，執行安裝指令與 API 金鑰設定。
+  </Step>
+  <Step title="執行 generate_script.py">
+    自動根據六大準則生成 `script.yaml` 劇本。
+  </Step>
+  <Step title="執行 ai_media_gen.py">
+    自動呼叫 Edge-TTS 生成語音、DALL·E 生成場景配圖。
+  </Step>
+  <Step title="執行 media_assembler.py">
+    MoviePy 自動合成影片，下載 `data/output/final_video.mp4`。
+  </Step>
+</Steps>

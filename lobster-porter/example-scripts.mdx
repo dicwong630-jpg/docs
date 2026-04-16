@@ -1,0 +1,484 @@
+---
+title: "範例程式碼與腳本模板"
+description: "可直接複製使用的 Python 腳本：TTS 語音生成、圖像生成、影片合成、一鍵流水線"
+icon: "code"
+---
+
+## 劇本格式（script.yaml）
+
+所有腳本的共同輸入格式。每個 `scene` 代表一個教學場景片段：
+
+```yaml
+# data/script.yaml
+title: "ko仔粵語教學 - 第10集"
+language: "zh-HK"
+scenes:
+  - id: "scene_01"
+    duration_hint: "60s"
+    narration: "大家好，歡迎收睇ko仔粵語教學！今集我哋學習日常問候語。"
+    image_prompt: "A cheerful Cantonese classroom with colorful flashcards on the wall, cartoon style"
+    keywords: ["問候語", "你好", "早晨"]
+
+  - id: "scene_02"
+    duration_hint: "90s"
+    narration: "第一個詞係「你好」，廣東話係問候別人最基本嘅方式。"
+    image_prompt: "Two cartoon characters greeting each other with speech bubble saying 你好"
+    keywords: ["你好", "greeting"]
+
+  - id: "scene_03"
+    duration_hint: "60s"
+    narration: "今日學識咗兩個重要問候語，下集再見！"
+    image_prompt: "Friendly cartoon teacher waving goodbye in a bright classroom"
+    keywords: ["再見", "總結"]
+```
+
+---
+
+## 腳本一：TTS 語音生成（Edge-TTS）
+
+**文件**：`scripts/tts_generator.py`
+
+```python
+"""
+TTS 語音生成腳本（使用免費 Edge-TTS）
+依據 script.yaml 的 narration 欄位，逐場景生成 MP3 語音檔。
+
+使用方法：
+    python scripts/tts_generator.py --script data/script.yaml --out data/audio/
+"""
+
+import asyncio
+import argparse
+import os
+import yaml
+import edge_tts
+
+# 粵語聲線選項
+VOICES = {
+    "female": "zh-HK-HiuMaanNeural",   # 女聲（默認）
+    "male":   "zh-HK-WanLungNeural",   # 男聲
+}
+
+
+async def generate_scene_audio(
+    scene_id: str,
+    text: str,
+    voice: str,
+    output_dir: str
+) -> str:
+    """將單一場景的旁白文字轉換為 MP3 語音"""
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{scene_id}.mp3")
+
+    communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(output_path)
+
+    print(f"  ✅ {scene_id} → {output_path}")
+    return output_path
+
+
+async def generate_all_audio(script_path: str, output_dir: str, gender: str = "female"):
+    """讀取 script.yaml，為所有場景生成語音"""
+    with open(script_path, "r", encoding="utf-8") as f:
+        script = yaml.safe_load(f)
+
+    voice = VOICES.get(gender, VOICES["female"])
+    print(f"🎙️  使用聲線：{voice}")
+    print(f"📄  劇本：{script.get('title', '未命名')}")
+
+    tasks = []
+    for scene in script.get("scenes", []):
+        scene_id   = scene["id"]
+        narration  = scene.get("narration", "")
+        if narration:
+            tasks.append(
+                generate_scene_audio(scene_id, narration, voice, output_dir)
+            )
+
+    await asyncio.gather(*tasks)
+    print(f"\n🎉 語音生成完成，共 {len(tasks)} 個場景")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Edge-TTS 批量語音生成")
+    parser.add_argument("--script", default="data/script.yaml", help="劇本 YAML 路徑")
+    parser.add_argument("--out",    default="data/audio/",      help="語音輸出目錄")
+    parser.add_argument("--gender", default="female",           help="聲線性別：female / male")
+    args = parser.parse_args()
+
+    asyncio.run(generate_all_audio(args.script, args.out, args.gender))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+## 腳本二：圖像生成（DALL·E 3）
+
+**文件**：`scripts/image_generator.py`
+
+```python
+"""
+圖像生成腳本（使用 OpenAI DALL·E 3）
+依據 script.yaml 的 image_prompt 欄位，逐場景生成配圖。
+
+使用方法：
+    export OPENAI_API_KEY=sk-...
+    python scripts/image_generator.py --script data/script.yaml --out data/image/
+"""
+
+import argparse
+import os
+import yaml
+import requests
+from openai import OpenAI
+
+client = OpenAI()  # 自動讀取 OPENAI_API_KEY 環境變數
+
+
+def generate_image(scene_id: str, prompt: str, output_dir: str, size: str = "1024x576") -> str:
+    """呼叫 DALL·E 3 生成單一場景配圖"""
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"{scene_id}.png")
+
+    # 在 prompt 加入風格指示
+    full_prompt = (
+        f"{prompt}. "
+        "Bright, friendly educational illustration style. "
+        "Suitable for a Cantonese language teaching video for beginners."
+    )
+
+    response = client.images.generate(
+        model="dall-e-3",
+        prompt=full_prompt,
+        size=size,
+        quality="standard",
+        n=1,
+    )
+
+    image_url = response.data[0].url
+    img_data = requests.get(image_url).content
+    with open(output_path, "wb") as f:
+        f.write(img_data)
+
+    print(f"  🖼️  {scene_id} → {output_path}")
+    return output_path
+
+
+def generate_all_images(script_path: str, output_dir: str):
+    """讀取 script.yaml，為所有場景生成配圖"""
+    with open(script_path, "r", encoding="utf-8") as f:
+        script = yaml.safe_load(f)
+
+    print(f"🎨 開始圖像生成：{script.get('title', '未命名')}")
+    count = 0
+    for scene in script.get("scenes", []):
+        scene_id     = scene["id"]
+        image_prompt = scene.get("image_prompt", "")
+        if image_prompt:
+            generate_image(scene_id, image_prompt, output_dir)
+            count += 1
+
+    print(f"\n🎉 圖像生成完成，共 {count} 張")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="DALL·E 3 批量圖像生成")
+    parser.add_argument("--script", default="data/script.yaml", help="劇本 YAML 路徑")
+    parser.add_argument("--out",    default="data/image/",      help="圖像輸出目錄")
+    args = parser.parse_args()
+
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise EnvironmentError("請先設定 OPENAI_API_KEY 環境變數")
+
+    generate_all_images(args.script, args.out)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+<Tip>
+  **免費替代方案**：不想花費 API 費用？可改用 [Stable Diffusion via Diffusers](https://huggingface.co/runwayml/stable-diffusion-v1-5) 在 Colab GPU 本地生成，詳見下方 Stable Diffusion 版本。
+</Tip>
+
+### 腳本二（替代）：Stable Diffusion 免費版
+
+```python
+"""Stable Diffusion 圖像生成（需要 Colab GPU 環境）"""
+
+from diffusers import StableDiffusionPipeline
+import torch, yaml, os, argparse
+
+def load_pipeline():
+    pipe = StableDiffusionPipeline.from_pretrained(
+        "runwayml/stable-diffusion-v1-5",
+        torch_dtype=torch.float16
+    )
+    pipe = pipe.to("cuda")
+    return pipe
+
+def generate_all_images_sd(script_path: str, output_dir: str):
+    with open(script_path, "r", encoding="utf-8") as f:
+        script = yaml.safe_load(f)
+
+    os.makedirs(output_dir, exist_ok=True)
+    pipe = load_pipeline()
+
+    for scene in script.get("scenes", []):
+        scene_id = scene["id"]
+        prompt   = scene.get("image_prompt", "")
+        if not prompt:
+            continue
+        image = pipe(
+            prompt + ", bright educational illustration, cartoon style",
+            num_inference_steps=30,
+            guidance_scale=7.5
+        ).images[0]
+        out_path = os.path.join(output_dir, f"{scene_id}.png")
+        image.save(out_path)
+        print(f"  🖼️  {scene_id} → {out_path}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--script", default="data/script.yaml")
+    parser.add_argument("--out",    default="data/image/")
+    args = parser.parse_args()
+    generate_all_images_sd(args.script, args.out)
+```
+
+---
+
+## 腳本三：影片合成（MoviePy）
+
+**文件**：`scripts/media_assembler.py`
+
+```python
+"""
+影片合成腳本（使用 MoviePy）
+將每個場景的語音（MP3）+ 配圖（PNG）合成為影片片段，
+最後串接為完整影片並加入片頭/片尾字幕。
+
+使用方法：
+    python scripts/media_assembler.py --script data/script.yaml \
+        --audio data/audio/ --image data/image/ \
+        --out data/output/final_video.mp4
+"""
+
+import argparse
+import os
+import yaml
+from moviepy import (
+    AudioFileClip,
+    ImageClip,
+    TextClip,
+    CompositeVideoClip,
+    concatenate_videoclips,
+)
+
+
+def build_scene_clip(
+    scene_id: str,
+    audio_dir: str,
+    image_dir: str,
+    text_overlay: str = ""
+) -> CompositeVideoClip | None:
+    """合成單一場景：圖像 + 語音 + 可選字幕"""
+    audio_path = os.path.join(audio_dir, f"{scene_id}.mp3")
+    image_path = os.path.join(image_dir, f"{scene_id}.png")
+
+    if not os.path.exists(audio_path) or not os.path.exists(image_path):
+        print(f"  ⚠️  跳過 {scene_id}（缺少音訊或圖片）")
+        return None
+
+    audio = AudioFileClip(audio_path)
+    duration = audio.duration
+
+    # 圖像持續時間與音訊相同
+    image_clip = ImageClip(image_path, duration=duration)
+    image_clip = image_clip.resized(height=576)  # 720p 兼容尺寸
+
+    layers = [image_clip]
+
+    # 加入底部字幕（可選）
+    if text_overlay:
+        txt = (
+            TextClip(
+                text=text_overlay,
+                font_size=32,
+                color="white",
+                font="Arial",
+                stroke_color="black",
+                stroke_width=2,
+            )
+            .with_duration(duration)
+            .with_position(("center", "bottom"))
+        )
+        layers.append(txt)
+
+    composite = CompositeVideoClip(layers).with_audio(audio)
+    print(f"  🎬 {scene_id} 合成完成（{duration:.1f}s）")
+    return composite
+
+
+def assemble_video(
+    script_path: str,
+    audio_dir: str,
+    image_dir: str,
+    output_path: str,
+    fps: int = 24
+):
+    """讀取劇本，合成所有場景並輸出最終影片"""
+    with open(script_path, "r", encoding="utf-8") as f:
+        script = yaml.safe_load(f)
+
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+
+    clips = []
+    for scene in script.get("scenes", []):
+        scene_id  = scene["id"]
+        narration = scene.get("narration", "")
+        clip = build_scene_clip(scene_id, audio_dir, image_dir, narration)
+        if clip:
+            clips.append(clip)
+
+    if not clips:
+        print("❌ 沒有可合成的場景，請先執行 TTS 和圖像生成")
+        return
+
+    final = concatenate_videoclips(clips, method="compose")
+    final.write_videofile(output_path, fps=fps, codec="libx264", audio_codec="aac")
+    print(f"\n🎉 影片合成完成：{output_path}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="MoviePy 影片合成")
+    parser.add_argument("--script", default="data/script.yaml")
+    parser.add_argument("--audio",  default="data/audio/")
+    parser.add_argument("--image",  default="data/image/")
+    parser.add_argument("--out",    default="data/output/final_video.mp4")
+    parser.add_argument("--fps",    default=24, type=int)
+    args = parser.parse_args()
+
+    assemble_video(args.script, args.audio, args.image, args.out, args.fps)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+## 腳本四：一鍵執行主流水線
+
+**文件**：`scripts/main_pipeline.py`
+
+```python
+"""
+主流水線腳本：一鍵執行 TTS → 圖像生成 → 影片合成
+使用方法：
+    python scripts/main_pipeline.py [--script data/script.yaml] [--use-dalle] [--use-sd]
+"""
+
+import argparse
+import asyncio
+import os
+import subprocess
+import sys
+
+
+def run_step(description: str, cmd: list[str]):
+    """執行流水線步驟，失敗則中止"""
+    print(f"\n{'='*50}")
+    print(f"▶  {description}")
+    print(f"{'='*50}")
+    result = subprocess.run(cmd, check=False)
+    if result.returncode != 0:
+        print(f"❌ 步驟失敗：{description}")
+        sys.exit(1)
+    print(f"✅ 完成：{description}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="龍蝦搬運工一鍵影片生成流水線")
+    parser.add_argument("--script",  default="data/script.yaml", help="劇本 YAML 路徑")
+    parser.add_argument("--gender",  default="female",           help="TTS 聲線：female / male")
+    parser.add_argument("--use-sd",  action="store_true",        help="使用 Stable Diffusion（需 GPU）")
+    parser.add_argument("--fps",     default=24, type=int,       help="影片幀率")
+    args = parser.parse_args()
+
+    print("🦞 龍蝦搬運工 AI 影片生成流水線啟動")
+    print(f"   劇本：{args.script}")
+
+    # 步驟 1：TTS 語音生成
+    run_step("TTS 語音生成（Edge-TTS）", [
+        sys.executable, "scripts/tts_generator.py",
+        "--script", args.script,
+        "--out", "data/audio/",
+        "--gender", args.gender,
+    ])
+
+    # 步驟 2：圖像生成
+    if args.use_sd:
+        run_step("圖像生成（Stable Diffusion）", [
+            sys.executable, "scripts/image_generator.py",
+            "--script", args.script,
+            "--out", "data/image/",
+        ])
+    else:
+        run_step("圖像生成（DALL·E 3）", [
+            sys.executable, "scripts/image_generator.py",
+            "--script", args.script,
+            "--out", "data/image/",
+        ])
+
+    # 步驟 3：影片合成
+    run_step("影片合成（MoviePy）", [
+        sys.executable, "scripts/media_assembler.py",
+        "--script", args.script,
+        "--audio",  "data/audio/",
+        "--image",  "data/image/",
+        "--out",    "data/output/final_video.mp4",
+        "--fps",    str(args.fps),
+    ])
+
+    print("\n🎊 全部完成！成品影片：data/output/final_video.mp4")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+---
+
+## 在 Google Colab 快速執行
+
+複製以下內容貼入 Colab Notebook：
+
+```python
+# ① 克隆 Repo（替換為你的倉庫網址）
+!git clone https://github.com/dicwong630-jpg/docs.git
+%cd docs
+
+# ② 安裝依賴
+!pip install -q edge-tts openai pyyaml python-dotenv moviepy requests
+!apt-get install -y ffmpeg -q
+
+# ③ 設定 API 金鑰（Colab Secrets 方式）
+from google.colab import userdata
+import os
+os.environ["OPENAI_API_KEY"] = userdata.get("OPENAI_API_KEY")
+
+# ④ 執行流水線（預設使用 DALL·E 3 生成圖像）
+!python scripts/main_pipeline.py --script data/script.yaml --gender female
+
+# ⑤ 下載成品
+from google.colab import files
+files.download("data/output/final_video.mp4")
+```
+
+<Note>
+  第一次執行時，Edge-TTS 和 DALL·E 3 都需要網絡連接。Colab 免費版有時會中斷連接，建議先以少量場景（2–3 個 scene）測試，確認流程正確後再生成完整影片。
+</Note>

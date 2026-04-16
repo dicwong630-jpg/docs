@@ -1,0 +1,129 @@
+---
+title: "推薦工具與 Python 套件"
+description: "TTS、圖像生成、影片合成的最佳工具比較及安裝指南"
+icon: "toolbox"
+---
+
+## 1. 語音合成（TTS）
+
+| 工具 | 類型 | 優點 | 適用場景 |
+|------|------|------|----------|
+| **Edge-TTS** | 免費雲端 API | 零費用、多語言、粵語支援佳 | 初學者首選 |
+| **Coqui TTS** | 開源本地 | 可自訓練聲音模型 | 進階定制聲線 |
+| **Google Cloud TTS** | 付費 API | 品質最高、WaveNet 音質 | 正式產品 |
+| **ElevenLabs** | 付費 API | 情感自然、語調豐富 | 高品質旁白 |
+| **OpenAI TTS** | 付費 API | 與 GPT 無縫整合 | 已有 OpenAI 訂閱者 |
+
+### 安裝 Edge-TTS（推薦起點）
+
+```bash
+pip install edge-tts
+```
+
+### 安裝 Coqui TTS
+
+```bash
+pip install TTS
+```
+
+---
+
+## 2. 圖像生成
+
+| 工具 | 類型 | 優點 | 適用場景 |
+|------|------|------|----------|
+| **Stable Diffusion (Diffusers)** | 開源本地/Colab | 完全免費、可自定風格 | Colab GPU 環境首選 |
+| **DALL·E 3 (OpenAI API)** | 付費 API | 文字理解強、品質穩定 | 精確場景描述 |
+| **Replicate API** | 付費按次計費 | 無需管理模型、多種風格 | 快速原型 |
+| **Stability AI API** | 付費 API | 官方 SDXL 接口 | 批量生產 |
+
+### 安裝 Diffusers（Stable Diffusion）
+
+```bash
+pip install diffusers transformers accelerate torch
+```
+
+### 安裝 OpenAI（DALL·E 3）
+
+```bash
+pip install openai
+```
+
+---
+
+## 3. 影片合成
+
+| 工具 | 類型 | 優點 | 適用場景 |
+|------|------|------|----------|
+| **MoviePy** | 開源 Python | 純 Python API、易於腳本整合 | 自動化流程首選 |
+| **FFmpeg** | 開源 CLI | 最快速、格式支援最廣 | 批量轉檔與合成 |
+| **Runway ML** | 付費雲端 | AI 補幀、風格化效果 | 進階影片美化 |
+
+### 安裝 MoviePy
+
+```bash
+pip install moviepy
+```
+
+### 安裝 FFmpeg（Colab 環境）
+
+```bash
+apt-get install -y ffmpeg
+```
+
+---
+
+## 4. LLM 劇本生成
+
+| 工具 | 優點 | API |
+|------|------|-----|
+| **GPT-4o (OpenAI)** | 理解中文語境最強 | `openai` 套件 |
+| **Gemini Pro (Google)** | 免費額度較高 | `google-generativeai` 套件 |
+| **Claude (Anthropic)** | 長文本、邏輯嚴謹 | `anthropic` 套件 |
+
+### 安裝 LLM 套件
+
+```bash
+pip install openai google-generativeai anthropic
+```
+
+---
+
+## 5. 輔助工具
+
+| 工具 | 用途 | 安裝 |
+|------|------|------|
+| **PyYAML** | 讀寫 script.yaml | `pip install pyyaml` |
+| **python-dotenv** | 安全讀取 API 金鑰 | `pip install python-dotenv` |
+| **Pillow** | 圖像後處理、加字幕 | `pip install Pillow` |
+| **requests** | HTTP API 呼叫 | 內建，無需安裝 |
+
+---
+
+## 一次安裝所有依賴
+
+將以下內容存為 `requirements.txt`，在 Colab 或本地執行：
+
+```text
+edge-tts
+TTS
+openai
+google-generativeai
+diffusers
+transformers
+accelerate
+torch
+moviepy
+pyyaml
+python-dotenv
+Pillow
+requests
+```
+
+```bash
+pip install -r requirements.txt
+```
+
+<Note>
+  在 Google Colab 免費版中，GPU 資源有限。圖像生成建議選用小型模型（如 `runwayml/stable-diffusion-v1-5`）或直接使用 API（DALL·E 3、Replicate），避免顯存不足。
+</Note>

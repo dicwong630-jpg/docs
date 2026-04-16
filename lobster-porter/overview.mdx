@@ -1,0 +1,78 @@
+---
+title: "龍蝦搬運工 AI 影音流水線概覽"
+description: "以劇本為大腦，自動串聯 TTS、圖像生成與影片合成的完整雲端生產線"
+icon: "film"
+---
+
+## 什麼是龍蝦搬運工 AI 影音流水線？
+
+「龍蝦搬運工」（Lobster Porter）影音生產線是以**自動化劇本（script.yaml）為頂層排程依據**，依序呼叫語音合成、圖像生成、影片合成等 AI 工具，最終輸出可直接發佈的教學視頻。
+
+整條流水線設計原則：
+
+- **劇本即大腦**：所有步驟讀取同一個 `script.yaml`，不依賴固定時長切割
+- **插件化 AI 工具**：TTS、圖像、合成等模組可獨立替換
+- **零本地安裝**：以 Google Colab 或 HuggingFace Spaces 在雲端執行
+- **開源可共建**：所有腳本與設定存於 GitHub，歡迎協作改進
+
+---
+
+## 核心架構
+
+```
+lobster_porter_ai_pipeline/
+├── config/
+│   ├── rules.yaml          # 六大準則（AI 劇本生成校驗依據）
+│   └── api_keys_sample.env # API 金鑰範本（請勿提交真實金鑰）
+├── data/
+│   ├── script.yaml         # 自動生成的劇本（場景/分鏡/對話/時序）
+│   ├── materials/          # 原始素材來源
+│   ├── audio/              # TTS 生成的語音檔
+│   ├── image/              # 圖像生成的美術圖
+│   ├── segments/           # 中間合成片段
+│   └── output/             # 最終成品影片
+└── scripts/
+    ├── generate_script.py  # 呼叫 LLM 自動生成劇本
+    ├── ai_media_gen.py     # TTS + 圖像生成
+    ├── media_assembler.py  # 影片合成
+    └── main_pipeline.py    # 一鍵執行全流程
+```
+
+---
+
+## 五步流程總覽
+
+<Steps>
+  <Step title="生成劇本">
+    呼叫 LLM（如 GPT-4o 或 Gemini）依據 `rules.yaml` 六大準則自動撰寫 YAML 劇本，包含場景、角色對話、分鏡描述。
+  </Step>
+  <Step title="素材調度">
+    讀取劇本，自動建立素材需求清單，按六大準則分類搬運至對應資料夾。
+  </Step>
+  <Step title="AI 音畫生成">
+    - **TTS**：逐段文字轉語音（推薦 Edge-TTS 或 Coqui TTS）
+    - **圖像**：逐場景生成配圖（推薦 Stable Diffusion 或 DALL·E 3）
+  </Step>
+  <Step title="影片合成">
+    將語音軌 + 圖像序列用 MoviePy / FFmpeg 逐段合成，自動對齊時序。
+  </Step>
+  <Step title="發佈">
+    成品影片可由腳本呼叫 YouTube Data API 或手動上傳，日誌自動記錄至 `logs/`。
+  </Step>
+</Steps>
+
+---
+
+## 快速跳轉
+
+<Columns cols={2}>
+  <Card title="推薦工具清單" icon="toolbox" href="/lobster-porter/tools">
+    TTS、圖像生成、影片合成的最佳套件與雲端 API 比較
+  </Card>
+  <Card title="雲端流水線設置" icon="cloud" href="/lobster-porter/cloud-pipeline">
+    Google Colab 與 HuggingFace Spaces 完整設置教學
+  </Card>
+  <Card title="範例程式碼" icon="code" href="/lobster-porter/example-scripts">
+    可直接複製貼上的 Python 腳本模板
+  </Card>
+</Columns>

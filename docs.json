@@ -44,6 +44,15 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "龍蝦搬運工 AI 影音流水線",
+            "pages": [
+              "lobster-porter/overview",
+              "lobster-porter/tools",
+              "lobster-porter/cloud-pipeline",
+              "lobster-porter/example-scripts"
+            ]
           }
         ]
       },
