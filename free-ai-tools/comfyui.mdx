@@ -1,0 +1,140 @@
+---
+title: ComfyUI + Wan2.1
+description: 完全免費的開源 AI 影片生成工作流程，本地運行無使用上限，適合進階用家和開發者。
+icon: code
+---
+
+# ComfyUI + Wan2.1
+
+## 工具簡介
+
+**ComfyUI** 是一個開源的 AI 生成工作流程介面，透過視覺化節點（Node）方式組合各種 AI 模型。**Wan2.1** 是阿里巴巴開源的最新文字/圖片轉影片模型，整合兩者後可在本地電腦**完全免費、無限次數**生成高質素 AI 影片——無浮水印、無積分限制、無隱私顧慮。
+
+<Warning>
+  本方案需要有一定技術基礎，並且需要具備 NVIDIA GPU 的電腦（建議 8GB VRAM 以上）。如果係初學者，建議先從 Kling AI 或 CapCut 入手。
+</Warning>
+
+---
+
+## 系統需求
+
+| 項目 | 最低要求 | 推薦配置 |
+|------|---------|---------|
+| GPU | NVIDIA 8GB VRAM | NVIDIA 16GB+ VRAM |
+| RAM | 16GB | 32GB |
+| 儲存空間 | 50GB 可用空間 | 100GB+ |
+| 作業系統 | Windows 10/11 | Windows 11 |
+| CUDA 版本 | 11.8+ | 12.1+ |
+
+<Info>
+  若沒有合適的 GPU，可改用 **Google Colab**（免費 T4 GPU）或 **Kaggle**（免費 T4x2）在雲端運行 ComfyUI，同樣完全免費。
+</Info>
+
+---
+
+## 核心優勢
+
+<CardGroup cols={2}>
+  <Card title="完全免費無限制" icon="infinity">
+    本地運行，無積分、無訂閱費用、無使用次數限制，生成多少都不收費
+  </Card>
+  <Card title="最高隱私保護" icon="shield">
+    所有生成過程在本地進行，影片素材不上傳至任何第三方伺服器
+  </Card>
+  <Card title="高度可定製" icon="puzzle-piece">
+    透過節點組合，可建立複雜的自動化工作流程，整合多個 AI 模型
+  </Card>
+  <Card title="社群生態豐富" icon="users">
+    全球開發者共享工作流程（Workflow），可直接下載使用他人建立的流程
+  </Card>
+</CardGroup>
+
+---
+
+## 安裝教學（Windows）
+
+<Steps>
+  <Step title="安裝 ComfyUI">
+    前往 [ComfyUI GitHub](https://github.com/comfyanonymous/ComfyUI) 下載 **ComfyUI_windows_portable** 整合包，解壓縮至任意目錄（建議放在 D 槽）。
+  </Step>
+  <Step title="下載 Wan2.1 模型">
+    前往 Hugging Face 下載 Wan2.1 模型檔案：
+    - **Wan2.1-T2V-1.3B**（文字轉影片，8GB VRAM 適用，檔案較小）
+    - **Wan2.1-T2V-14B**（更高質素，需 16GB+ VRAM）
+
+    將模型檔案放入 `ComfyUI/models/diffusion_models/` 目錄。
+  </Step>
+  <Step title="安裝必要的自訂節點">
+    啟動 ComfyUI 後，安裝 **ComfyUI-Manager**：
+    1. 點擊介面右下角 **Manager**
+    2. 搜尋並安裝 `ComfyUI-VideoHelperSuite`（影片處理節點）
+    3. 重啟 ComfyUI
+  </Step>
+  <Step title="載入 Wan2.1 工作流程">
+    在 ComfyUI 主介面：
+    1. 點擊 **Load** 載入工作流程 JSON 檔案
+    2. 或直接拖拉從網上下載的 `.json` 工作流程檔至介面
+    3. 推薦工作流程來源：[ComfyUI Workflows 社群](https://openart.ai/workflows)
+  </Step>
+  <Step title="設定並生成">
+    在工作流程介面：
+    1. 在 **CLIP Text Encode** 節點輸入影片描述（建議英文）
+    2. 設定影片長度（幀數）和解析度
+    3. 點擊右上角 **Queue Prompt** 開始生成
+    4. 生成完成後影片自動儲存至 `ComfyUI/output/` 目錄
+  </Step>
+</Steps>
+
+---
+
+## Google Colab 免費雲端版
+
+若沒有 NVIDIA GPU，可使用 Google Colab 免費運行：
+
+<Steps>
+  <Step title="開啟 Colab Notebook">
+    搜尋 GitHub 上的 **ComfyUI Colab** 項目（如 `camenduru/comfyui-colab`），點擊 **Open in Colab**。
+  </Step>
+  <Step title="切換為 GPU 運行時">
+    在 Colab 選單：**執行階段** → **變更執行階段類型** → 選擇 **T4 GPU** → 儲存。
+  </Step>
+  <Step title="依序執行格">
+    點擊每個格子左側的播放按鈕，依序執行安裝和啟動指令，最後獲得 Gradio 或 ngrok 連結。
+  </Step>
+  <Step title="用連結訪問 ComfyUI">
+    點擊生成的連結，即可在瀏覽器中使用完整的 ComfyUI 介面，操作方式與本地版完全相同。
+  </Step>
+</Steps>
+
+---
+
+## 常用提示詞格式
+
+```
+[主體描述], [動作], [場景], [攝影機], [畫質關鍵字]
+
+例如：
+A panda eating bamboo in a misty forest, slow movement, 
+close-up shot, cinematic, 8K, high detail, shallow depth of field
+```
+
+---
+
+## 推薦學習資源
+
+- **YouTube**：搜尋「ComfyUI Wan2.1 tutorial」，大量免費教學
+- **Reddit**：r/comfyui — 社群答疑、工作流程分享
+- **OpenArt**：[openart.ai/workflows](https://openart.ai/workflows) — 免費工作流程下載
+
+---
+
+## 適合對象
+
+- ✅ 有技術背景的開發者和進階用家
+- ✅ 需要大量生成影片素材，不想受積分限制
+- ✅ 重視資料私隱，不想影片素材上傳至雲端
+- ✅ 想深入了解 AI 影片生成技術原理
+- ❌ 完全沒有技術基礎的初學者（建議改用 Kling AI）
+
+**ComfyUI GitHub：** [github.com/comfyanonymous/ComfyUI](https://github.com/comfyanonymous/ComfyUI)  
+**Wan2.1 模型：** [huggingface.co/Wan-AI](https://huggingface.co/Wan-AI)

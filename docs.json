@@ -44,6 +44,17 @@
               "ai-tools/claude-code",
               "ai-tools/windsurf"
             ]
+          },
+          {
+            "group": "免費 AI 視頻工具",
+            "pages": [
+              "free-ai-tools/overview",
+              "free-ai-tools/runway",
+              "free-ai-tools/kling",
+              "free-ai-tools/capcut",
+              "free-ai-tools/elevenlabs",
+              "free-ai-tools/comfyui"
+            ]
           }
         ]
       },
