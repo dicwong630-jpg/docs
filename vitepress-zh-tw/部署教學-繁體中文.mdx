@@ -157,6 +157,35 @@ Netlify 提供簡易的持續部署，每次推送到 GitHub 即自動重新建�
     - 多人協作時，先 `git pull` 再編輯，避免合併衝突
     - 可使用 `.gitignore` 排除不需要追蹤的暫存檔案
   </Accordion>
+  <Accordion title='錯誤：「Error while turning on Settings Sync. Cancelled」'>
+    啟用 Settings Sync 時出現此錯誤，通常是內建的 `vscode.github-authentication` 擴充套件被停用所致。
+
+    **原因**：Settings Sync 需要透過 `vscode.github-authentication`（由 vscode 官方提供）進行 GitHub 登入，若該套件被全域停用，登入流程會直接被取消，並拋出此錯誤。
+
+    **解決步驟**：
+
+    1. 按 `Ctrl+Shift+X` 開啟擴充套件面板
+    2. 搜尋 `GitHub Authentication`，找到發行者為 **vscode** 的內建套件
+    3. 若狀態顯示「已全域停用」，點擊 **啟用** → 重新載入視窗
+    4. 按 `Ctrl+Shift+P`，輸入 `Settings Sync: Turn On` 並重試
+
+    > **提示**：此套件為 VSCode 內建，無法解除安裝，只能啟用或停用。
+  </Accordion>
+  <Accordion title='訊息：「This extension is disabled globally by the user.」'>
+    此訊息出現在擴充套件面板中，代表某個套件（通常是 `vscode.github-authentication`）已被你手動全域停用。
+
+    **常見觸發情境**：
+    - 切換 VSCode Profile 時批次停用了多個套件
+    - 手動點擊「全域停用」後忘記重新啟用
+
+    **解決方式**：
+
+    1. 按 `Ctrl+Shift+X`，搜尋並找到顯示此訊息的套件
+    2. 點擊 **Enable** (啟用)，選擇「全域啟用」
+    3. 重新載入視窗：按 `Ctrl+Shift+P` → 輸入 `Developer: Reload Window`
+
+    重新載入後，相依此套件的功能（如 Settings Sync、GitHub Pull Requests）即可正常運作。
+  </Accordion>
 </AccordionGroup>
 
 ---
@@ -170,6 +199,8 @@ Netlify 提供簡易的持續部署，每次推送到 GitHub 即自動重新建�
 | 中文路徑顯示亂碼 | Git 預設對非 ASCII 路徑進行轉義 | 設定 `core.quotepath false` |
 | 部署後頁面空白 | `base` 路徑設定錯誤 | 確認 `config.ts` 中 `base` 與倉庫名稱一致 |
 | 字型顯示為英文預設字型 | 未載入中文字型 | 在 CSS 中引入 Noto Sans TC 等中文字型 |
+| Settings Sync 出現「Cancelled」錯誤 | `vscode.github-authentication` 擴充套件被停用 | 在擴充套件面板中找到該套件並啟用，再重試 Settings Sync |
+| 擴充套件顯示「This extension is disabled globally」 | 使用者手動全域停用該套件 | 點擊「Enable」全域啟用，並重新載入視窗 |
 
 ---
 
