@@ -186,6 +186,34 @@ Netlify 提供簡易的持續部署，每次推送到 GitHub 即自動重新建�
 
     重新載入後，相依此套件的功能（如 Settings Sync、GitHub Pull Requests）即可正常運作。
   </Accordion>
+  <Accordion title="終端機環境變數：VSCode 擴充套件的自動注入">
+    開啟 VSCode 整合終端機時，部分內建擴充套件會自動向終端機環境注入變數。以下列出最常見的兩個套件及其作用。
+
+    **`GitHub.copilot-chat`**
+
+    將 Copilot CLI 與除錯指令的路徑前置加入 `PATH`：
+
+    ```
+    PATH=...globalStorage\github.copilot-chat\debugCommand;
+          ...globalStorage\github.copilot-chat\copilotCli;${env:PATH}
+    ```
+
+    這使得 `gh copilot` 等 Copilot CLI 指令可在終端機中直接執行，無需手動設定路徑。
+
+    **`vscode.git`（提供 git auth provider）**
+
+    注入 Git 憑證詢問腳本所需的環境變數，讓 Git 推送／拉取時能透過 VSCode UI 完成驗證：
+
+    | 變數 | 說明 |
+    |------|------|
+    | `GIT_ASKPASS` | 指向 VSCode 提供的 askpass 腳本，用於彈出帳號密碼對話框 |
+    | `VSCODE_GIT_ASKPASS_NODE` | askpass 腳本執行所需的 Node（此處為 `Code.exe`） |
+    | `VSCODE_GIT_ASKPASS_EXTRA_ARGS` | 傳遞給 askpass 的額外參數（預設為空） |
+    | `VSCODE_GIT_ASKPASS_MAIN` | askpass 主腳本的完整路徑 |
+    | `VSCODE_GIT_IPC_HANDLE` | VSCode 與 Git 擴充套件之間的 IPC 通訊管道（Named Pipe） |
+
+    > **提示**：若終端機中 Git 推送時未彈出驗證視窗，或出現 `Permission denied` 錯誤，請確認 `vscode.git` 擴充套件已啟用，且上述環境變數有正確注入（可在終端機執行 `echo $VSCODE_GIT_ASKPASS_MAIN` 確認）。
+  </Accordion>
 </AccordionGroup>
 
 ---
@@ -201,6 +229,7 @@ Netlify 提供簡易的持續部署，每次推送到 GitHub 即自動重新建�
 | 字型顯示為英文預設字型 | 未載入中文字型 | 在 CSS 中引入 Noto Sans TC 等中文字型 |
 | Settings Sync 出現「Cancelled」錯誤 | `vscode.github-authentication` 擴充套件被停用 | 在擴充套件面板中找到該套件並啟用，再重試 Settings Sync |
 | 擴充套件顯示「This extension is disabled globally」 | 使用者手動全域停用該套件 | 點擊「Enable」全域啟用，並重新載入視窗 |
+| Git 推送未彈出驗證視窗或 `Permission denied` | `vscode.git` 停用或 `GIT_ASKPASS` 未注入 | 確認 `vscode.git` 已啟用，並在終端機執行 `echo $VSCODE_GIT_ASKPASS_MAIN` 確認環境變數存在 |
 
 ---
 
